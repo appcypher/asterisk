@@ -1,0 +1,1 @@
+{"main-capabilities":{"identifier":"main-capabilities","description":"Prompt Bar main capabilities","local":true,"windows":["main"],"permissions":["core:event:allow-listen","core:window:allow-start-dragging"]}}
