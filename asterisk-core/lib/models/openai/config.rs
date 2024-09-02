@@ -125,6 +125,16 @@ pub enum ModelType {
     #[strum(to_string = "gpt-4o")]
     Gpt4o,
 
+    /// The GPT-4o 2024-08-06 model.
+    #[serde(rename = "gpt-4o-2024-08-06")]
+    #[strum(to_string = "gpt-4o-2024-08-06")]
+    Gpt4o2024_08_06,
+
+    /// The GPT-4o 2024-05-13 model.
+    #[serde(rename = "gpt-4o-2024-05-13")]
+    #[strum(to_string = "gpt-4o-2024-05-13")]
+    Gpt4o2024_05_13,
+
     /// The GPT-4 turbo model.
     #[serde(rename = "gpt-4-turbo")]
     #[strum(to_string = "gpt-4-turbo")]
@@ -265,7 +275,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             api_key: env::var(OPENAI_API_KEY).ok(),
-            model: ModelType::Gpt4o.to_string(),
+            model: ModelType::Gpt4oMini.to_string(),
             frequency_penalty: None,
             logit_bias: None,
             logprobs: None,

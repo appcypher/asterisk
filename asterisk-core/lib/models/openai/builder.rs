@@ -48,7 +48,7 @@ pub type OpenAILikeModelBuilder<M> = ModelBuilder<String, M>;
 impl<U, M> ModelBuilder<U, M> {
     /// The ID of the model to use.
     ///
-    /// Defaults to `ModelType::Gpt4o`.
+    /// Defaults to `ModelType::Gpt4oMini`.
     pub fn model(self, model: impl Into<String>) -> ModelBuilder<U, String> {
         ModelBuilder {
             model: model.into(),
@@ -247,7 +247,7 @@ impl OpenAIModelBuilder<()> {
     /// Builds the OpenAI model.
     pub fn build(self) -> OpenAIModel {
         let config = Config {
-            model: ModelType::Gpt4o.to_string(),
+            model: ModelType::Gpt4oMini.to_string(),
             api_key: self.api_key,
             frequency_penalty: self.frequency_penalty,
             logit_bias: self.logit_bias,

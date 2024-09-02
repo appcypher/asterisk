@@ -204,7 +204,7 @@ mod tests {
 
         assert_eq!(model.base_url, OPENAI_API_URL.to_string());
         assert!(model.config.api_key.as_ref().unwrap().starts_with("sk-"));
-        assert_eq!(model.config.model, ModelType::Gpt4o.to_string());
+        assert_eq!(model.config.model, ModelType::Gpt4oMini.to_string());
         assert_eq!(model.config.frequency_penalty, None);
         assert_eq!(model.config.logit_bias, None);
         assert_eq!(model.config.logprobs, None);
@@ -233,7 +233,7 @@ mod tests {
 
         assert_eq!(model.base_url, OPENAI_API_URL.to_string());
         assert!(model.config.api_key.as_ref().unwrap().starts_with("sk-"));
-        assert_eq!(model.config.model, ModelType::Gpt4o.to_string());
+        assert_eq!(model.config.model, ModelType::Gpt4oMini.to_string());
         assert_eq!(model.config.frequency_penalty, None);
         assert_eq!(model.config.logit_bias, None);
         assert_eq!(model.config.logprobs, None);
