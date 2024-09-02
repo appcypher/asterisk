@@ -1,8 +1,8 @@
 use std::{borrow::Cow, collections::HashMap, env};
 
 use super::{
-    Config, ModelType, OpenAIModel, ResponseFormat, ServiceTier, StreamOptions, Tool, ToolChoice,
-    OPENAI_API_KEY,
+    Config, ModelType, OpenAILikeModel, OpenAIModel, ResponseFormat, ServiceTier, StreamOptions,
+    Tool, ToolChoice, OPENAI_API_KEY, OPENAI_API_URL,
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -10,8 +10,9 @@ use super::{
 //--------------------------------------------------------------------------------------------------
 
 /// A builder for an OpenAI model.
-pub struct OpenAIModelBuilder<M> {
+pub struct ModelBuilder<U, M> {
     model: M,
+    base_url: U,
     api_key: Option<String>,
     frequency_penalty: Option<f32>,
     logit_bias: Option<HashMap<u64, i8>>,
@@ -34,17 +35,52 @@ pub struct OpenAIModelBuilder<M> {
     user: Option<String>,
 }
 
+/// A builder for an OpenAI model.
+pub type OpenAIModelBuilder<M> = ModelBuilder<(), M>;
+
+/// A builder for an OpenAI-like model.
+pub type OpenAILikeModelBuilder<M> = ModelBuilder<String, M>;
+
 //--------------------------------------------------------------------------------------------------
 // Methods
 //--------------------------------------------------------------------------------------------------
 
-impl<M> OpenAIModelBuilder<M> {
+impl<U, M> ModelBuilder<U, M> {
     /// The ID of the model to use.
     ///
     /// Defaults to `ModelType::Gpt4o`.
-    pub fn model(self, model: ModelType) -> OpenAIModelBuilder<ModelType> {
-        OpenAIModelBuilder {
-            model,
+    pub fn model(self, model: impl Into<String>) -> ModelBuilder<U, String> {
+        ModelBuilder {
+            model: model.into(),
+            base_url: self.base_url,
+            api_key: self.api_key,
+            frequency_penalty: self.frequency_penalty,
+            logit_bias: self.logit_bias,
+            logprobs: self.logprobs,
+            top_logprobs: self.top_logprobs,
+            max_tokens: self.max_tokens,
+            n: self.n,
+            presence_penalty: self.presence_penalty,
+            response_format: self.response_format,
+            seed: self.seed,
+            service_tier: self.service_tier,
+            stop: self.stop,
+            stream: self.stream,
+            stream_options: self.stream_options,
+            temperature: self.temperature,
+            top_p: self.top_p,
+            tools: self.tools,
+            tool_choice: self.tool_choice,
+            parallel_tool_calls: self.parallel_tool_calls,
+            user: self.user,
+        }
+    }
+
+    /// The base URL for making requests to the OpenAI-like API.
+    pub fn base_url(self, base_url: String) -> OpenAILikeModelBuilder<M> {
+        ModelBuilder {
+            base_url,
+            model: self.model,
             api_key: self.api_key,
             frequency_penalty: self.frequency_penalty,
             logit_bias: self.logit_bias,
@@ -207,7 +243,41 @@ impl<M> OpenAIModelBuilder<M> {
     }
 }
 
-impl OpenAIModelBuilder<ModelType> {
+impl OpenAIModelBuilder<()> {
+    /// Builds the OpenAI model.
+    pub fn build(self) -> OpenAIModel {
+        let config = Config {
+            model: ModelType::Gpt4o.to_string(),
+            api_key: self.api_key,
+            frequency_penalty: self.frequency_penalty,
+            logit_bias: self.logit_bias,
+            logprobs: self.logprobs,
+            top_logprobs: self.top_logprobs,
+            max_tokens: self.max_tokens,
+            n: self.n,
+            presence_penalty: self.presence_penalty,
+            response_format: self.response_format,
+            seed: self.seed,
+            service_tier: self.service_tier,
+            stop: self.stop,
+            stream: self.stream,
+            stream_options: self.stream_options,
+            temperature: self.temperature,
+            top_p: self.top_p,
+            tools: self.tools,
+            tool_choice: self.tool_choice,
+            parallel_tool_calls: self.parallel_tool_calls,
+            user: self.user,
+        };
+
+        OpenAIModel {
+            config: Cow::Owned(config),
+            base_url: OPENAI_API_URL.to_string(),
+        }
+    }
+}
+
+impl OpenAIModelBuilder<String> {
     /// Builds the OpenAI model.
     pub fn build(self) -> OpenAIModel {
         let config = Config {
@@ -236,7 +306,42 @@ impl OpenAIModelBuilder<ModelType> {
 
         OpenAIModel {
             config: Cow::Owned(config),
+            base_url: OPENAI_API_URL.to_string(),
         }
+    }
+}
+
+impl OpenAILikeModelBuilder<String> {
+    /// Builds the OpenAI model.
+    pub fn build(self) -> OpenAILikeModel {
+        let config = Config {
+            model: self.model,
+            api_key: self.api_key,
+            frequency_penalty: self.frequency_penalty,
+            logit_bias: self.logit_bias,
+            logprobs: self.logprobs,
+            top_logprobs: self.top_logprobs,
+            max_tokens: self.max_tokens,
+            n: self.n,
+            presence_penalty: self.presence_penalty,
+            response_format: self.response_format,
+            seed: self.seed,
+            service_tier: self.service_tier,
+            stop: self.stop,
+            stream: self.stream,
+            stream_options: self.stream_options,
+            temperature: self.temperature,
+            top_p: self.top_p,
+            tools: self.tools,
+            tool_choice: self.tool_choice,
+            parallel_tool_calls: self.parallel_tool_calls,
+            user: self.user,
+        };
+
+        OpenAILikeModel(OpenAIModel {
+            config: Cow::Owned(config),
+            base_url: self.base_url,
+        })
     }
 }
 
@@ -244,10 +349,11 @@ impl OpenAIModelBuilder<ModelType> {
 // Trait Implementations
 //--------------------------------------------------------------------------------------------------
 
-impl Default for OpenAIModelBuilder<()> {
+impl Default for ModelBuilder<(), ()> {
     fn default() -> Self {
         Self {
             model: (),
+            base_url: (),
             api_key: env::var(OPENAI_API_KEY).ok(),
             frequency_penalty: None,
             logit_bias: None,

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, env};
 
 use serde::{Deserialize, Serialize};
+use strum_macros::Display;
 
 //--------------------------------------------------------------------------------------------------
 // Constants
@@ -20,7 +21,7 @@ pub const OPENAI_API_URL: &str = "https://api.openai.com/v1/chat/completions";
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Config {
     /// The ID of the model to use.
-    pub model: ModelType,
+    pub model: String,
 
     /// The API key for making requests to the OpenAI API.
     #[serde(skip)]
@@ -112,30 +113,36 @@ pub struct Config {
 }
 
 /// The model type.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
 pub enum ModelType {
     /// The GPT-4o mini model.
     #[serde(rename = "gpt-4o-mini")]
+    #[strum(to_string = "gpt-4o-mini")]
     Gpt4oMini,
 
     /// The GPT-4o model.
     #[serde(rename = "gpt-4o")]
+    #[strum(to_string = "gpt-4o")]
     Gpt4o,
 
     /// The GPT-4 turbo model.
     #[serde(rename = "gpt-4-turbo")]
+    #[strum(to_string = "gpt-4-turbo")]
     Gpt4Turbo,
 
     /// The GPT-4 model.
     #[serde(rename = "gpt-4")]
+    #[strum(to_string = "gpt-4")]
     Gpt4,
 
     /// The GPT-3.5 turbo model.
     #[serde(rename = "gpt-3.5-turbo")]
+    #[strum(to_string = "gpt-3.5-turbo")]
     Gpt3_5Turbo,
 
     /// The GPT-3.5 turbo 16k model.
     #[serde(rename = "gpt-3.5-turbo-16k")]
+    #[strum(to_string = "gpt-3.5-turbo-16k")]
     Gpt3_5Turbo16k,
 }
 
@@ -258,7 +265,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             api_key: env::var(OPENAI_API_KEY).ok(),
-            model: ModelType::Gpt4o,
+            model: ModelType::Gpt4o.to_string(),
             frequency_penalty: None,
             logit_bias: None,
             logprobs: None,
@@ -279,5 +286,11 @@ impl Default for Config {
             parallel_tool_calls: None,
             user: None,
         }
+    }
+}
+
+impl From<ModelType> for String {
+    fn from(value: ModelType) -> Self {
+        value.to_string()
     }
 }

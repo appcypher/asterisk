@@ -16,6 +16,7 @@ reqwest.workspace = true
 reqwest-eventsource = "0.6.0"
 serde.workspace = true
 serde_json.workspace = true
+strum_macros = "0.26.4"
 thiserror.workspace = true
 tokio.workspace = true
 
