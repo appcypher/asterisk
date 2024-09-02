@@ -1,5 +1,6 @@
 use std::{error::Error, fmt::Display};
 
+use reqwest::Response;
 use thiserror::Error;
 
 use super::openai;
@@ -18,6 +19,14 @@ pub enum ModelError {
     #[error("Failed to send request to API")]
     RequestError(#[from] reqwest::Error),
 
+    /// Error that occurs when the API returns an error from OpenAI.
+    #[error("OpenAI error: {0}")]
+    OpenAIResponseError(#[from] openai::ResponseError),
+
+    /// Error that occurs when the response stream from the API fails.
+    #[error("Failed to parse response from API")]
+    OpenAIResponseStreamError(#[from] OpenAIResponseStreamError),
+
     /// Error that occurs when parsing the response from the API fails.
     #[error("Failed to parse response from API")]
     ParseError(#[from] serde_json::Error),
@@ -25,10 +34,18 @@ pub enum ModelError {
     /// Custom error.
     #[error(transparent)]
     Custom(#[from] AnyError),
+}
 
-    /// Error that occurs when the API returns an error from OpenAI.
-    #[error("OpenAI error: {0}")]
-    OpenAIError(#[from] openai::ResponseError),
+/// Error type for the response stream from the OpenAI API.
+#[derive(Debug, Error)]
+pub enum OpenAIResponseStreamError {
+    /// Error related to the OpenAI API.
+    #[error("OpenAI response error")]
+    OpenAIResponse(Response),
+
+    /// Other errors related to the SSE.
+    #[error("EventSource error: {0}")]
+    EventSourceError(#[from] reqwest_eventsource::Error),
 }
 
 /// An error that can represent any error.

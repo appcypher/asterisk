@@ -18,5 +18,5 @@ pub trait TextStreamModel {
     fn prompt_stream(
         &self,
         prompt: Prompt,
-    ) -> impl Future<Output = ModelResult<BoxStream<'static, String>>>;
+    ) -> impl Future<Output = ModelResult<BoxStream<'static, ModelResult<String>>>>;
 }

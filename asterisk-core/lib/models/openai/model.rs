@@ -3,11 +3,13 @@ use std::borrow::Cow;
 use futures::stream::BoxStream;
 
 use crate::models::{
-    openai::{RequestBody, StreamOptions, OPENAI_API_URL},
+    openai::{StreamOptions, OPENAI_API_URL},
     ModelError, ModelResult, Prompt, TextModel, TextStreamModel,
 };
 
-use super::{Config, ResponseBody, ResponseOk};
+use super::{
+    Config, RequestBody, RequestMessages, ResponseBody, ResponseChunkOk, ResponseOk, ResponseStream,
+};
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -31,20 +33,37 @@ impl OpenAIModel {
     }
 
     /// Calls the OpenAI API with the given request.
-    pub async fn call(&self, request: RequestBody) -> ModelResult<ResponseOk> {
+    pub async fn call(&self, messages: RequestMessages) -> ModelResult<ResponseOk> {
         let config = self.get_config_without_streaming();
         let request = reqwest::Client::new()
             .post(OPENAI_API_URL)
             .bearer_auth(config.api_key.as_ref().unwrap())
-            .json(&request);
+            .json(&RequestBody {
+                messages,
+                config: config.into_owned(),
+            });
 
         let response = request.send().await?;
         let body: ResponseBody = response.json().await?;
         let ResponseBody::Ok(body) = body else {
-            return Err(ModelError::OpenAIError(body.unwrap_err()));
+            return Err(ModelError::OpenAIResponseError(body.unwrap_err()));
         };
 
         Ok(body)
+    }
+
+    /// Calls the OpenAI API with the given request and gets back a stream of response chunks.
+    pub fn call_streaming(&self, messages: RequestMessages) -> ResponseStream {
+        let config = self.get_config_with_streaming(None);
+        let request = reqwest::Client::new()
+            .post(OPENAI_API_URL)
+            .bearer_auth(config.api_key.as_ref().unwrap())
+            .json(&RequestBody {
+                messages,
+                config: config.into_owned(),
+            });
+
+        ResponseStream::new(request)
     }
 
     /// Gets the model's configuration with streaming enabled.
@@ -72,6 +91,24 @@ impl OpenAIModel {
 
         config
     }
+
+    /// Extract main content from response
+    pub(crate) fn extract_content_from_response(response: &ResponseOk) -> String {
+        response.choices[0]
+            .message
+            .content
+            .clone()
+            .unwrap_or_default()
+    }
+
+    /// Extract main content from response chunk
+    pub(crate) fn extract_content_from_response_chunk(response: &ResponseChunkOk) -> String {
+        response.choices[0]
+            .delta
+            .content
+            .clone()
+            .unwrap_or_default()
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -80,27 +117,19 @@ impl OpenAIModel {
 
 impl TextModel for OpenAIModel {
     async fn prompt(&self, prompt: Prompt) -> ModelResult<String> {
-        let request = RequestBody {
-            messages: prompt.into(),
-            config: self.config.as_ref().clone(),
-        };
-
-        let response = self.call(request).await?;
-        let content = response.choices[0]
-            .message
-            .content
-            .clone()
-            .unwrap_or_default();
-
+        let response = self.call(prompt.into()).await?;
+        let content = Self::extract_content_from_response(&response);
         Ok(content)
     }
 }
 
 impl TextStreamModel for OpenAIModel {
-    async fn prompt_stream(&self, _prompt: Prompt) -> ModelResult<BoxStream<'static, String>> {
-        let _config = self.get_config_with_streaming(None);
-
-        todo!()
+    async fn prompt_stream(
+        &self,
+        prompt: Prompt,
+    ) -> ModelResult<BoxStream<'static, ModelResult<String>>> {
+        let stream = self.call_streaming(prompt.into());
+        Ok(Box::pin(stream))
     }
 }
 

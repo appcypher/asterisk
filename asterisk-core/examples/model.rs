@@ -21,7 +21,7 @@ async fn main() -> ModelResult<()> {
     };
 
     let model = OpenAIModel::default();
-    let output: String = model.prompt(prompt).await?;
+    let output = model.prompt(prompt).await?;
 
     println!("chat model output = {output:#?}");
 
