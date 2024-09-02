@@ -1,5 +1,5 @@
 [package]
-name = "asterisk"
+name = "asterisk-app"
 version = "0.1.0"
 description = "Asterisk"
 repository = "https://github.com/zerocore-ai/mono"

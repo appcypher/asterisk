@@ -1,14 +1,7 @@
-//! Asterisk Core
-
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
-
 //--------------------------------------------------------------------------------------------------
-// Exports
+// Main
 //--------------------------------------------------------------------------------------------------
 
-pub mod agents;
-pub mod memories;
-pub mod models;
-pub mod tools;
-pub mod utils;
+fn main() {
+    println!("Asterisk CLI coming soon!");
+}

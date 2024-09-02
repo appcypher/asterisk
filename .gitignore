@@ -11,3 +11,8 @@ private
 *.tmp
 .history
 .DS_Store
+
+# Ignore .env files
+.env
+.env.dev
+.env.prod

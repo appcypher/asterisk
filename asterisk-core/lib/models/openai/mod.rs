@@ -1,14 +1,17 @@
-//! Asterisk Core
+//! Module for working with OpenAI models.
 
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
+mod builder;
+mod config;
+mod message;
+mod model;
+mod stream;
 
 //--------------------------------------------------------------------------------------------------
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-pub mod agents;
-pub mod memories;
-pub mod models;
-pub mod tools;
-pub mod utils;
+pub use builder::*;
+pub use config::*;
+pub use message::*;
+pub use model::*;
+pub use stream::*;

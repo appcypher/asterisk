@@ -1,14 +1,7 @@
-//! Asterisk Core
+//! Virtual Machines
 
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
+mod orchestration;
 
 //--------------------------------------------------------------------------------------------------
 // Exports
 //--------------------------------------------------------------------------------------------------
-
-pub mod agents;
-pub mod memories;
-pub mod models;
-pub mod tools;
-pub mod utils;

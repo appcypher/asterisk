@@ -1,14 +1,15 @@
-//! Asterisk Core
+//! Models
 
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
+mod error;
+mod prompt;
+mod traits;
 
 //--------------------------------------------------------------------------------------------------
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-pub mod agents;
-pub mod memories;
-pub mod models;
-pub mod tools;
-pub mod utils;
+pub mod openai;
+
+pub use error::*;
+pub use prompt::*;
+pub use traits::*;

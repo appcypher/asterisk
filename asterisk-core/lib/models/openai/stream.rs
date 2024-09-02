@@ -1,14 +1,6 @@
-//! Asterisk Core
-
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
-
 //--------------------------------------------------------------------------------------------------
-// Exports
+// Types
 //--------------------------------------------------------------------------------------------------
 
-pub mod agents;
-pub mod memories;
-pub mod models;
-pub mod tools;
-pub mod utils;
+/// A stream of chunked responses from the OpenAI API using server-sent events.
+pub struct ResponseStream {}

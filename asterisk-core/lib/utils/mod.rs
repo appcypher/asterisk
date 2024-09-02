@@ -1,14 +1,9 @@
-//! Asterisk Core
+//! Utilities
 
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
+mod env;
 
 //--------------------------------------------------------------------------------------------------
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-pub mod agents;
-pub mod memories;
-pub mod models;
-pub mod tools;
-pub mod utils;
+pub use env::*;
