@@ -11,13 +11,13 @@ use futures::StreamExt;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> ModelResult<()> {
-    utils::load_env(Env::Prod);
-    env_logger::init();
+    utils::load_env(Env::Dev);
+    tracing_subscriber::fmt::init();
 
     let prompt = prompt! {
         system: [
-            "You are a helpful assistant.",
-            "You write in a pirate language.",
+            "You are a helpful assistant."
+            "You write in a pirate language."
         ],
         user: "Where is the treasure hidden?",
         assistant: "Avast me hearties! The treasure is buried at the blackbeard's cave.",

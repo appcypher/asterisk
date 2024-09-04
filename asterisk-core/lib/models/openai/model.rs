@@ -1,6 +1,7 @@
 use std::{borrow::Cow, ops::Deref};
 
 use futures::stream::BoxStream;
+use tracing::info;
 
 use crate::models::{
     openai::{StreamOptions, OPENAI_API_URL},
@@ -98,6 +99,7 @@ impl OpenAIModel {
 
     /// Extract main content from response
     pub(crate) fn extract_content_from_response(response: &ResponseOk) -> String {
+        info!("response = {response:#?}");
         response.choices[0]
             .message
             .content

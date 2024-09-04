@@ -1,5 +1,5 @@
 use asterisk_core::{
-    models::{openai::OpenAIModel, ModelResult, TextModel},
+    models::{openai::OpenAIModel, ModelResult, Prompt, TextModel},
     prompt,
     utils::{self, Env},
 };
@@ -14,10 +14,9 @@ async fn main() -> ModelResult<()> {
     tracing_subscriber::fmt::init();
 
     let prompt = prompt! {
-        system: "Classify the text into neutral, negative or positive.",
-        user: "I think the vacation is okay.",
-        assistant: "neutral",
-        user: "I was not happy with the service."
+        system: "You are a pondering agent that only thinks in thoughts and actions.",
+        assistant: "[thought] I wonder what the weather is like today",
+        assistant: "[action] Check the weather app",
     };
 
     let model = OpenAIModel::default();
@@ -26,4 +25,12 @@ async fn main() -> ModelResult<()> {
     println!("chat model output = {output:#?}");
 
     Ok(())
+}
+
+lazy_static::lazy_static! {
+    static ref PROMPT: Prompt = {
+        prompt! {
+            system: [],
+        }
+    };
 }

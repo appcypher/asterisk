@@ -6,12 +6,12 @@ use std::vec::IntoIter;
 
 /// A prompt is the input that the model will use to generate a response.
 pub struct Prompt {
-    messages: Vec<Message>,
+    messages: Vec<PromptMessage>,
 }
 
 /// A message is a single message in the prompt.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Message {
+pub enum PromptMessage {
     /// A message that sets the context for the conversation.
     System(String),
 
@@ -33,23 +33,23 @@ impl Prompt {
     }
 
     /// Add a message to the prompt.
-    pub fn push(&mut self, message: Message) {
+    pub fn push(&mut self, message: PromptMessage) {
         self.messages.push(message);
     }
 
     /// Remove the last message from the prompt.
-    pub fn pop(&mut self) -> Option<Message> {
+    pub fn pop(&mut self) -> Option<PromptMessage> {
         self.messages.pop()
     }
 
     /// Adds a user message to the prompt.
     pub fn add_user(&mut self, message: String) {
-        self.messages.push(Message::User(message));
+        self.messages.push(PromptMessage::User(message));
     }
 
     /// Adds an assistant message to the prompt.
     pub fn add_assistant(&mut self, message: String) {
-        self.messages.push(Message::Assistant(message));
+        self.messages.push(PromptMessage::Assistant(message));
     }
 
     /// Get the number of messages in the prompt.
@@ -68,8 +68,8 @@ impl Prompt {
 //--------------------------------------------------------------------------------------------------
 
 impl IntoIterator for Prompt {
-    type Item = Message;
-    type IntoIter = IntoIter<Message>;
+    type Item = PromptMessage;
+    type IntoIter = IntoIter<PromptMessage>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.messages.into_iter()
@@ -97,18 +97,18 @@ macro_rules! prompt {
         prompt
     }};
     (@message system : $str:tt) => {
-        $crate::models::Message::System(prompt!(@content $str))
+        $crate::models::PromptMessage::System(prompt!(@content $str))
     };
     (@message user : $str:tt) => {
-        $crate::models::Message::User(prompt!(@content $str))
+        $crate::models::PromptMessage::User(prompt!(@content $str))
     };
     (@message assistant : $str:tt) => {
-        $crate::models::Message::Assistant(prompt!(@content $str))
+        $crate::models::PromptMessage::Assistant(prompt!(@content $str))
     };
     (@content $str:literal) => { $str.to_string() };
     (@content [ ]) => { String::new() };
-    (@content [ $($str:literal),+ $(,)? ]) => {
-        [$($str),*].join(" ")
+    (@content [ $($str:literal)+ ]) => {
+        [$($str),*].join("\n")
     };
 }
 
@@ -124,8 +124,8 @@ mod tests {
     fn test_model_prompt() {
         let prompt = prompt! {
             system: [
-                "You are a helpful Japanese assistant.",
-                "You should always answer in Japanese.",
+                "You are a helpful Japanese assistant."
+                "You should always answer in Japanese."
             ],
             user: "What is the weather in Tokyo?",
             assistant: "The weather in Tokyo is sunny.",
@@ -134,18 +134,18 @@ mod tests {
         assert_eq!(prompt.len(), 3);
         assert_eq!(
             prompt.messages[0],
-            Message::System(
-                "You are a helpful Japanese assistant. You should always answer in Japanese."
+            PromptMessage::System(
+                "You are a helpful Japanese assistant.\nYou should always answer in Japanese."
                     .to_string()
             )
         );
         assert_eq!(
             prompt.messages[1],
-            Message::User("What is the weather in Tokyo?".to_string())
+            PromptMessage::User("What is the weather in Tokyo?".to_string())
         );
         assert_eq!(
             prompt.messages[2],
-            Message::Assistant("The weather in Tokyo is sunny.".to_string())
+            PromptMessage::Assistant("The weather in Tokyo is sunny.".to_string())
         );
     }
 }

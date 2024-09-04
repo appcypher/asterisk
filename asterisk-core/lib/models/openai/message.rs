@@ -3,7 +3,7 @@ use std::fmt::{self, Display};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::models::{Message, Prompt};
+use crate::models::{Prompt, PromptMessage};
 
 use super::{Config, ToolType};
 
@@ -379,15 +379,15 @@ impl From<Prompt> for RequestMessages {
         let request_messages = prompt
             .into_iter()
             .map(|m| match m {
-                Message::System(content) => RequestMessage::System {
+                PromptMessage::System(content) => RequestMessage::System {
                     content,
                     name: None,
                 },
-                Message::User(content) => RequestMessage::User {
+                PromptMessage::User(content) => RequestMessage::User {
                     content,
                     name: None,
                 },
-                Message::Assistant(content) => RequestMessage::Assistant {
+                PromptMessage::Assistant(content) => RequestMessage::Assistant {
                     content,
                     name: None,
                     refusal: None,
