@@ -1,7 +1,21 @@
 //! First attempt at creating a reliable agent.
-use crate::{agents::AgentResult, models::openai::OpenAIModel};
 
-use super::{AgentSideChannels, DreamerBuilder, Memories, Thread, Tool};
+use tokio::{sync::mpsc, task::JoinHandle};
+use tracing::info;
+
+use crate::models::{openai::OpenAIModel, TextModel};
+
+use super::{
+    ActionMessage, AgentSideChannels, DreamerBuilder, DreamerError, DreamerResult, Memories,
+    Metrics, ThoughtMessage, Thread, ThreadMessage, Tool,
+};
+
+//--------------------------------------------------------------------------------------------------
+// Constant
+//--------------------------------------------------------------------------------------------------
+
+/// The system instruction for the dreamer agent.
+const DREAMER_SYSTEM_INSTRUCTION: &str = include_str!("instruction.txt");
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -35,7 +49,7 @@ use super::{AgentSideChannels, DreamerBuilder, Memories, Thread, Tool};
 ///
 /// The system instruction is the initial influence on how the dream should progress, defining an
 /// AI assistant that knows what it is, how it works, and what it is supposed to do.
-#[allow(dead_code)] // TODO: Remove this
+#[allow(dead_code)] // TODO: remove this
 pub struct Dreamer {
     /// The model used to generate responses.
     pub(crate) model: OpenAIModel,
@@ -47,13 +61,13 @@ pub struct Dreamer {
     pub(crate) thread: Thread,
 
     /// The internal tools the assistant has access to.
-    pub(crate) internal_tools: Vec<Box<dyn Tool>>,
+    pub(crate) internal_tools: Vec<Box<dyn Tool + Send + Sync>>,
 
     /// The provided tools the assistant has access to.
-    pub(crate) provided_tools: Vec<Box<dyn Tool>>,
+    pub(crate) provided_tools: Vec<Box<dyn Tool + Send + Sync>>,
 
-    /// Asynchronous channels that the agent uses to interact with the outside world.
-    pub(crate) channels: AgentSideChannels,
+    /// Whether the agent is idle.
+    pub(crate) idle: bool,
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -62,35 +76,125 @@ pub struct Dreamer {
 
 impl Dreamer {
     /// Creates a new `Dreamer` with the given system instruction.
-    pub fn new(channels: AgentSideChannels) -> Self {
+    pub fn new() -> Self {
         Self {
             model: OpenAIModel::default(),
             memories: Memories::new(),
-            thread: Thread::new(),
+            thread: Thread::new(DREAMER_SYSTEM_INSTRUCTION),
             internal_tools: Vec::new(),
             provided_tools: Vec::new(),
-            channels,
+            idle: true,
         }
     }
 
-    /// Starts the agent.
-    pub async fn start(self) -> AgentResult<()> {
+    /// Creates a new `Dreamer` builder.
+    pub fn builder() -> DreamerBuilder {
+        DreamerBuilder::default()
+    }
+
+    /// Runs the agent.
+    pub fn run(mut self, mut channels: AgentSideChannels) -> JoinHandle<DreamerResult<()>> {
+        tokio::spawn(async move {
+            loop {
+                if self.idle {
+                    if let Some(message) = channels.message_rx.recv().await {
+                        self.handle_incoming_message(message)?;
+                    }
+
+                    continue;
+                }
+
+                tokio::select! {
+                    response = self.call() => {
+                        self.handle_model_response(response?, &channels.metrics_tx)?;
+                    }
+                    message = channels.message_rx.recv() => if let Some(message) = message {
+                        self.handle_incoming_message(message)?;
+                    }
+                }
+            }
+        })
+    }
+}
+
+impl Dreamer {
+    /// Handles the model response.
+    fn handle_model_response(
+        &mut self,
+        response: String,
+        metrics_tx: &mpsc::UnboundedSender<Metrics>,
+    ) -> DreamerResult<()> {
+        // Parse the response into a ThreadMessage.
+        let message: ThreadMessage = response.parse()?;
+
+        // Handle the message based on its type.
+        match &message {
+            ThreadMessage::Thought(thought) => self.handle_thought(thought)?,
+            ThreadMessage::Action(action) => self.handle_action(action)?,
+            _ => return Err(DreamerError::InvalidResponseMessage(message)),
+        }
+
+        // Send metrics to the metrics channel.
+        metrics_tx.send(Metrics::ThreadMessage(message.clone()))?;
+
+        // Add message to the thread.
+        self.thread.push_message(message);
+
         Ok(())
     }
 
-    /// Creates a new `Dreamer` builder.
-    pub fn builder() -> DreamerBuilder<()> {
-        DreamerBuilder::default()
+    /// Handles the incoming message.
+    fn handle_incoming_message(&mut self, _message: String) -> DreamerResult<()> {
+        println!("message: {}", _message);
+        Ok(())
+    }
+
+    /// Handles the thought message.
+    fn handle_thought(&mut self, thought: &ThoughtMessage) -> DreamerResult<()> {
+        if !thought.is_incomplete() {
+            self.make_idle();
+        } else {
+            self.make_busy();
+        }
+
+        Ok(())
+    }
+
+    /// Handles the action message.
+    fn handle_action(&mut self, action: &ActionMessage) -> DreamerResult<()> {
+        info!("TODO: action: {}", action.get_full_content());
+        // TODO: parse and send the action to the outside world
+        Ok(())
+    }
+
+    /// Calls the model by sending the thread to the model and receiving a response.
+    async fn call(&self) -> DreamerResult<String> {
+        self.model
+            .prompt(self.thread.clone())
+            .await
+            .map_err(Into::into)
+    }
+
+    /// Makes the agent idle.
+    fn make_idle(&mut self) {
+        self.idle = true;
+    }
+
+    /// Makes the agent busy.
+    fn make_busy(&mut self) {
+        self.idle = false;
     }
 }
 
 //--------------------------------------------------------------------------------------------------
-// Constant
+// Trait Implementations
 //--------------------------------------------------------------------------------------------------
 
-/// The system instruction for the dreamer agent.
-#[allow(dead_code)] // TODO: Remove this
-const DREAMER_SYSTEM_INSTRUCTION: &str = include_str!("instruction.txt");
+impl Default for Dreamer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 //--------------------------------------------------------------------------------------------------
 // Tests
@@ -101,7 +205,5 @@ mod tests {
     // use super::*;
 
     // #[test]
-    // fn test_agent_dreamer() {
-    //     // let agent = Dreamer::new();
-    // }
+    // fn test_agent_dreamer() { }
 }

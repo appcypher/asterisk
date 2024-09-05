@@ -1,0 +1,23 @@
+[package]
+name = "asterisk-cli"
+version = "0.1.0"
+edition = "2021"
+default-run = "asterisk"
+
+[[bin]]
+name = "asterisk"
+path = "bin/asterisk.rs"
+
+[lib]
+name = "asterisk"
+path = "lib/lib.rs"
+
+[dependencies]
+asterisk-core.workspace = true
+clap.workspace = true
+colored.workspace = true
+crossterm = { version = "0.28.1", features = ["event-stream"] }
+futures-util.workspace = true
+lazy_static = "1.5.0"
+thiserror.workspace = true
+tokio.workspace = true

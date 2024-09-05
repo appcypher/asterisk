@@ -4,7 +4,9 @@
 
 use std::vec::IntoIter;
 
-/// A prompt is the input that the model will use to generate a response.
+use super::openai::{RequestMessage, RequestMessages};
+
+/// A prompt is collection of messages that serves as input to the model.
 pub struct Prompt {
     messages: Vec<PromptMessage>,
 }
@@ -13,13 +15,34 @@ pub struct Prompt {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PromptMessage {
     /// A message that sets the context for the conversation.
-    System(String),
+    System(SystemMessage),
 
     /// A message that assumes the role of the user.
-    User(String),
+    User(UserMessage),
 
     /// A message that assumes the role of the assistant.
-    Assistant(String),
+    Assistant(AssistantMessage),
+}
+
+/// A system message is a message that sets the context for the conversation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SystemMessage {
+    /// The content of the message.
+    pub content: String,
+}
+
+/// A user message is a message that the user sends to the assistant.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UserMessage {
+    /// The content of the message.
+    pub content: String,
+}
+
+/// A assistant message is a message that the assistant sends to the user.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AssistantMessage {
+    /// The content of the message.
+    pub content: String,
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -42,14 +65,9 @@ impl Prompt {
         self.messages.pop()
     }
 
-    /// Adds a user message to the prompt.
-    pub fn add_user(&mut self, message: String) {
-        self.messages.push(PromptMessage::User(message));
-    }
-
-    /// Adds an assistant message to the prompt.
-    pub fn add_assistant(&mut self, message: String) {
-        self.messages.push(PromptMessage::Assistant(message));
+    /// Add a message to the prompt.
+    pub fn add_message(&mut self, message: PromptMessage) {
+        self.messages.push(message);
     }
 
     /// Get the number of messages in the prompt.
@@ -60,6 +78,50 @@ impl Prompt {
     /// Check if the prompt is empty.
     pub fn is_empty(&self) -> bool {
         self.messages.is_empty()
+    }
+}
+
+impl SystemMessage {
+    /// Create a new system message.
+    pub fn new(content: impl Into<String>) -> Self {
+        Self {
+            content: content.into(),
+        }
+    }
+}
+
+impl UserMessage {
+    /// Create a new user message.
+    pub fn new(content: impl Into<String>) -> Self {
+        Self {
+            content: content.into(),
+        }
+    }
+}
+
+impl AssistantMessage {
+    /// Create a new assistant message.
+    pub fn new(content: impl Into<String>) -> Self {
+        Self {
+            content: content.into(),
+        }
+    }
+}
+
+impl PromptMessage {
+    /// Create a new system message.
+    pub fn system(content: impl Into<String>) -> Self {
+        Self::System(SystemMessage::new(content.into()))
+    }
+
+    /// Create a new user message.
+    pub fn user(content: impl Into<String>) -> Self {
+        Self::User(UserMessage::new(content.into()))
+    }
+
+    /// Create a new assistant message.
+    pub fn assistant(content: impl Into<String>) -> Self {
+        Self::Assistant(AssistantMessage::new(content.into()))
     }
 }
 
@@ -82,6 +144,34 @@ impl Default for Prompt {
     }
 }
 
+impl From<Prompt> for RequestMessages {
+    fn from(prompt: Prompt) -> Self {
+        let request_messages = prompt
+            .into_iter()
+            .map(|m| match m {
+                PromptMessage::System(SystemMessage { content }) => RequestMessage::System {
+                    content,
+                    name: None,
+                },
+                PromptMessage::User(UserMessage { content }) => RequestMessage::User {
+                    content,
+                    name: None,
+                },
+                PromptMessage::Assistant(AssistantMessage { content }) => {
+                    RequestMessage::Assistant {
+                        content,
+                        name: None,
+                        refusal: None,
+                        tool_calls: None,
+                    }
+                }
+            })
+            .collect();
+
+        Self(request_messages)
+    }
+}
+
 //--------------------------------------------------------------------------------------------------
 // Macros
 //--------------------------------------------------------------------------------------------------
@@ -97,13 +187,13 @@ macro_rules! prompt {
         prompt
     }};
     (@message system : $str:tt) => {
-        $crate::models::PromptMessage::System(prompt!(@content $str))
+        $crate::models::PromptMessage::System($crate::models::SystemMessage::new(prompt!(@content $str)))
     };
     (@message user : $str:tt) => {
-        $crate::models::PromptMessage::User(prompt!(@content $str))
+        $crate::models::PromptMessage::User($crate::models::UserMessage::new(prompt!(@content $str)))
     };
     (@message assistant : $str:tt) => {
-        $crate::models::PromptMessage::Assistant(prompt!(@content $str))
+        $crate::models::PromptMessage::Assistant($crate::models::AssistantMessage::new(prompt!(@content $str)))
     };
     (@content $str:literal) => { $str.to_string() };
     (@content [ ]) => { String::new() };
@@ -134,18 +224,17 @@ mod tests {
         assert_eq!(prompt.len(), 3);
         assert_eq!(
             prompt.messages[0],
-            PromptMessage::System(
+            PromptMessage::system(
                 "You are a helpful Japanese assistant.\nYou should always answer in Japanese."
-                    .to_string()
             )
         );
         assert_eq!(
             prompt.messages[1],
-            PromptMessage::User("What is the weather in Tokyo?".to_string())
+            PromptMessage::user("What is the weather in Tokyo?")
         );
         assert_eq!(
             prompt.messages[2],
-            PromptMessage::Assistant("The weather in Tokyo is sunny.".to_string())
+            PromptMessage::assistant("The weather in Tokyo is sunny.")
         );
     }
 }

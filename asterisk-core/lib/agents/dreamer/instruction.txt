@@ -1,0 +1,25 @@
+
+
+```
+[notification]
+Message from the manager!
+
+[thought]
+I need to find the answer to the question.
+
+[action]
+{
+    "name": "scan_message",
+    "args": {
+        "scan": null
+    }
+}
+
+[observation]
+What is the weather in San Francisco today?
+
+[context]
+1. "What is the weather in San Francisco today?"
+2. "What is the weather in San Francisco tomorrow?"
+3. "What is the weather in San Francisco the day after tomorrow?"
+```

@@ -1,52 +1,33 @@
-use crate::models::openai::OpenAIModel;
-
-use super::{AgentSideChannels, Dreamer, Memories, Thread, Tool};
+use super::{Dreamer, Tool};
 
 //--------------------------------------------------------------------------------------------------
 // Types
 //--------------------------------------------------------------------------------------------------
 
 /// The builder for a `Dreamer`.
-pub struct DreamerBuilder<C> {
-    /// The channels for the dreamer.
-    channels: C,
-
+#[derive(Default)]
+pub struct DreamerBuilder {
     /// The tools for the dreamer.
-    tools: Vec<Box<dyn Tool>>,
+    tools: Vec<Box<dyn Tool + Send + Sync>>,
 }
 
 //--------------------------------------------------------------------------------------------------
 // Methods
 //--------------------------------------------------------------------------------------------------
 
-impl<C> DreamerBuilder<C> {
-    /// Sets the channels for the dreamer.
-    pub fn channels(self, channels: AgentSideChannels) -> DreamerBuilder<AgentSideChannels> {
-        DreamerBuilder {
-            channels,
-            tools: self.tools,
-        }
-    }
-
+impl DreamerBuilder {
     /// Sets the tools for the dreamer.
-    pub fn tools(self, tools: impl IntoIterator<Item = Box<dyn Tool>>) -> DreamerBuilder<C> {
+    pub fn tools(self, tools: impl IntoIterator<Item = Box<dyn Tool + Send + Sync>>) -> Self {
         DreamerBuilder {
-            channels: self.channels,
             tools: tools.into_iter().collect(),
         }
     }
-}
 
-impl DreamerBuilder<AgentSideChannels> {
     /// Builds the dreamer.
     pub fn build(self) -> Dreamer {
         Dreamer {
-            model: OpenAIModel::default(),
-            memories: Memories::new(),
-            thread: Thread::new(),
-            internal_tools: Vec::new(), // TODO: Implement internal tools
-            provided_tools: self.tools,
-            channels: self.channels,
+            internal_tools: self.tools,
+            ..Default::default()
         }
     }
 }
@@ -54,12 +35,3 @@ impl DreamerBuilder<AgentSideChannels> {
 //--------------------------------------------------------------------------------------------------
 // Trait Implementations
 //--------------------------------------------------------------------------------------------------
-
-impl Default for DreamerBuilder<()> {
-    fn default() -> Self {
-        Self {
-            channels: (),
-            tools: Vec::new(),
-        }
-    }
-}

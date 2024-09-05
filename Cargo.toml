@@ -1,5 +1,5 @@
 [workspace]
-members = ["asterisk-app", "asterisk-core", "asterisk-server"]
+members = ["asterisk-app", "asterisk-cli", "asterisk-core", "asterisk-server"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -17,3 +17,10 @@ pin-project = "1.1"
 tracing = "0.1.40"
 tracing-subscriber = "0.3"
 lazy_static = "1.5"
+asterisk-core = { path = "asterisk-core" }
+asterisk-cli = { path = "asterisk-cli" }
+asterisk-server = { path = "asterisk-server" }
+asterisk-app = { path = "asterisk-app" }
+colored = "2.1.0"
+clap = { version = "4.5.16", features = ["color", "derive"] }
+futures-util = "0.3.30"

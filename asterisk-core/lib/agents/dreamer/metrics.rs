@@ -1,10 +1,11 @@
-//! Agents
-
-mod error;
+use super::ThreadMessage;
 
 //--------------------------------------------------------------------------------------------------
-// Exports
+// Types
 //--------------------------------------------------------------------------------------------------
 
-pub mod dreamer;
-pub use error::*;
+/// The metrics that the dreamer agent can report to the outside world1.
+pub enum Metrics {
+    /// The thread message.
+    ThreadMessage(ThreadMessage),
+}

@@ -38,13 +38,13 @@ impl OpenAIModel {
     }
 
     /// Calls the API with the given request messages.
-    pub async fn call(&self, messages: RequestMessages) -> ModelResult<ResponseOk> {
+    pub async fn call(&self, messages: impl Into<RequestMessages>) -> ModelResult<ResponseOk> {
         let config = self.get_config_without_streaming();
         let request = reqwest::Client::new()
             .post(&self.base_url)
             .bearer_auth(config.api_key.as_ref().unwrap())
             .json(&RequestBody {
-                messages,
+                messages: messages.into(),
                 config: config.into_owned(),
             });
 
@@ -58,13 +58,13 @@ impl OpenAIModel {
     }
 
     /// Calls the API with the given request messages and gets back a stream of response chunks.
-    pub fn call_streaming(&self, messages: RequestMessages) -> ResponseStream {
+    pub fn call_streaming(&self, messages: impl Into<RequestMessages>) -> ResponseStream {
         let config = self.get_config_with_streaming(None);
         let request = reqwest::Client::new()
             .post(&self.base_url)
             .bearer_auth(config.api_key.as_ref().unwrap())
             .json(&RequestBody {
-                messages,
+                messages: messages.into(),
                 config: config.into_owned(),
             });
 
@@ -137,7 +137,7 @@ impl OpenAILikeModel {
 //--------------------------------------------------------------------------------------------------
 
 impl TextModel for OpenAIModel {
-    async fn prompt(&self, prompt: Prompt) -> ModelResult<String> {
+    async fn prompt(&self, prompt: impl Into<Prompt>) -> ModelResult<String> {
         let response = self.call(prompt.into()).await?;
         let content = Self::extract_content_from_response(&response);
         Ok(content)
@@ -147,7 +147,7 @@ impl TextModel for OpenAIModel {
 impl TextStreamModel for OpenAIModel {
     async fn prompt_stream(
         &self,
-        prompt: Prompt,
+        prompt: impl Into<Prompt>,
     ) -> ModelResult<BoxStream<'static, ModelResult<String>>> {
         let stream = self.call_streaming(prompt.into());
         Ok(Box::pin(stream))
@@ -155,7 +155,7 @@ impl TextStreamModel for OpenAIModel {
 }
 
 impl TextModel for OpenAILikeModel {
-    async fn prompt(&self, prompt: Prompt) -> ModelResult<String> {
+    async fn prompt(&self, prompt: impl Into<Prompt>) -> ModelResult<String> {
         self.0.prompt(prompt).await
     }
 }
@@ -163,7 +163,7 @@ impl TextModel for OpenAILikeModel {
 impl TextStreamModel for OpenAILikeModel {
     async fn prompt_stream(
         &self,
-        prompt: Prompt,
+        prompt: impl Into<Prompt>,
     ) -> ModelResult<BoxStream<'static, ModelResult<String>>> {
         self.0.prompt_stream(prompt).await
     }

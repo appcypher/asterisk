@@ -14,6 +14,10 @@ pub enum AgentError {
     /// Custom error.
     #[error(transparent)]
     Custom(#[from] AnyError),
+
+    /// Tokio mpsc send error.
+    #[error(transparent)]
+    TokioMpscSendError(#[from] tokio::sync::mpsc::error::SendError<String>),
 }
 
 /// An error that can represent any error.

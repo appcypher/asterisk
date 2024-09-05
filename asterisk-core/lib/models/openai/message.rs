@@ -3,8 +3,6 @@ use std::fmt::{self, Display};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::models::{Prompt, PromptMessage};
-
 use super::{Config, ToolType};
 
 //--------------------------------------------------------------------------------------------------
@@ -24,7 +22,7 @@ pub struct RequestBody {
 
 #[derive(Debug, Serialize)]
 /// A collection of messages in a chat conversation with the model.
-pub struct RequestMessages(Vec<RequestMessage>);
+pub struct RequestMessages(pub Vec<RequestMessage>);
 
 /// A message in a chat conversation with the model.
 #[derive(Debug, Serialize)]
@@ -373,32 +371,6 @@ impl ResponseBody {
 //--------------------------------------------------------------------------------------------------
 // Trait Implementations
 //--------------------------------------------------------------------------------------------------
-
-impl From<Prompt> for RequestMessages {
-    fn from(prompt: Prompt) -> Self {
-        let request_messages = prompt
-            .into_iter()
-            .map(|m| match m {
-                PromptMessage::System(content) => RequestMessage::System {
-                    content,
-                    name: None,
-                },
-                PromptMessage::User(content) => RequestMessage::User {
-                    content,
-                    name: None,
-                },
-                PromptMessage::Assistant(content) => RequestMessage::Assistant {
-                    content,
-                    name: None,
-                    refusal: None,
-                    tool_calls: None,
-                },
-            })
-            .collect();
-
-        Self(request_messages)
-    }
-}
 
 impl Display for ErrorInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
