@@ -1,55 +1,28 @@
 use std::{error::Error, fmt::Display};
 
-use reqwest::Response;
 use thiserror::Error;
-
-use super::openai;
 
 //-------------------------------------------------------------------------------------------------
 // Types
 //-------------------------------------------------------------------------------------------------
 
-/// The result type for model operations.
-pub type ModelResult<T> = Result<T, ModelError>;
+/// The result type for the dreamer agent operations.
+pub type ToolResult<T> = Result<T, ToolError>;
 
-/// Error type for model operations.
+/// Error type for the dreamer agent operations.
 #[derive(Debug, Error)]
-pub enum ModelError {
-    /// Error that occurs when a request to the API fails.
-    #[error("Failed to send request to API")]
-    RequestError(#[from] reqwest::Error),
+pub enum ToolError {
+    /// The tool failed to execute.
+    #[error("The tool failed to execute: {0}")]
+    ExecutionFailed(String),
 
-    /// Error that occurs when the API returns an error from OpenAI.
-    #[error("OpenAI error: {0}")]
-    OpenAIResponseError(#[from] openai::ResponseError),
-
-    /// Error that occurs when the API key is not found.
-    #[error("No API key found")]
-    NoAPIKeyFound,
-
-    /// Error that occurs when the response stream from the API fails.
-    #[error("Failed to parse response from API")]
-    OpenAIResponseStreamError(#[from] OpenAIResponseStreamError),
-
-    /// Error that occurs when parsing the response from the API fails.
-    #[error("Failed to parse response from API")]
-    ParseError(#[from] serde_json::Error),
+    /// The tool failed to parse.
+    #[error("The tool failed to parse: {0}")]
+    ParseFailed(#[from] serde_json::Error),
 
     /// Custom error.
     #[error(transparent)]
     Custom(#[from] AnyError),
-}
-
-/// Error type for the response stream from the OpenAI API.
-#[derive(Debug, Error)]
-pub enum OpenAIResponseStreamError {
-    /// Error related to the OpenAI API.
-    #[error("OpenAI response error")]
-    OpenAIResponse(Response),
-
-    /// Other errors related to the SSE.
-    #[error("EventSource error: {0}")]
-    EventSourceError(#[from] reqwest_eventsource::Error),
 }
 
 /// An error that can represent any error.
@@ -62,10 +35,10 @@ pub struct AnyError {
 // Methods
 //--------------------------------------------------------------------------------------------------
 
-impl ModelError {
+impl ToolError {
     /// Creates a new custom `Err` result.
-    pub fn custom(error: impl Into<anyhow::Error>) -> ModelError {
-        ModelError::Custom(AnyError {
+    pub fn custom(error: impl Into<anyhow::Error>) -> ToolError {
+        ToolError::Custom(AnyError {
             error: error.into(),
         })
     }
@@ -75,9 +48,9 @@ impl ModelError {
 // Functions
 //--------------------------------------------------------------------------------------------------
 
-/// Creates an `Ok` `ModelResult`.
+/// Creates an `Ok` `ToolResult`.
 #[allow(non_snake_case)]
-pub fn Ok<T>(value: T) -> ModelResult<T> {
+pub fn Ok<T>(value: T) -> ToolResult<T> {
     Result::Ok(value)
 }
 

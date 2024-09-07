@@ -42,7 +42,7 @@ impl OpenAIModel {
         let config = self.get_config_without_streaming();
         let request = reqwest::Client::new()
             .post(&self.base_url)
-            .bearer_auth(config.api_key.as_ref().unwrap())
+            .bearer_auth(config.api_key.as_ref().ok_or(ModelError::NoAPIKeyFound)?)
             .json(&RequestBody {
                 messages: messages.into(),
                 config: config.into_owned(),
@@ -58,17 +58,20 @@ impl OpenAIModel {
     }
 
     /// Calls the API with the given request messages and gets back a stream of response chunks.
-    pub fn call_streaming(&self, messages: impl Into<RequestMessages>) -> ResponseStream {
+    pub fn call_streaming(
+        &self,
+        messages: impl Into<RequestMessages>,
+    ) -> ModelResult<ResponseStream> {
         let config = self.get_config_with_streaming(None);
         let request = reqwest::Client::new()
             .post(&self.base_url)
-            .bearer_auth(config.api_key.as_ref().unwrap())
+            .bearer_auth(config.api_key.as_ref().ok_or(ModelError::NoAPIKeyFound)?)
             .json(&RequestBody {
                 messages: messages.into(),
                 config: config.into_owned(),
             });
 
-        ResponseStream::new(request)
+        Ok(ResponseStream::new(request))
     }
 
     /// Gets the model's configuration with streaming enabled.
@@ -149,7 +152,7 @@ impl TextStreamModel for OpenAIModel {
         &self,
         prompt: impl Into<Prompt>,
     ) -> ModelResult<BoxStream<'static, ModelResult<String>>> {
-        let stream = self.call_streaming(prompt.into());
+        let stream = self.call_streaming(prompt.into())?;
         Ok(Box::pin(stream))
     }
 }

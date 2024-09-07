@@ -113,9 +113,10 @@ pub struct Config {
 }
 
 /// The model type.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display, Default)]
 pub enum ModelType {
     /// The GPT-4o mini model.
+    #[default]
     #[serde(rename = "gpt-4o-mini")]
     #[strum(to_string = "gpt-4o-mini")]
     Gpt4oMini,

@@ -1,7 +1,7 @@
 use thiserror::Error;
 use tokio::sync::mpsc;
 
-use crate::models;
+use crate::{models, tools};
 
 use super::{Metrics, ThreadMessage};
 
@@ -46,6 +46,14 @@ pub enum DreamerError {
     /// Metrics send error.
     #[error("metrics send error: {0}")]
     MetricsSendError(#[from] mpsc::error::SendError<Metrics>),
+
+    /// JSON parsing error.
+    #[error("JSON parsing error: {0}")]
+    JsonParsingError(#[from] serde_json::Error),
+
+    /// Tool error.
+    #[error("tool error: {0}")]
+    ToolError(#[from] tools::ToolError),
 }
 
 //--------------------------------------------------------------------------------------------------

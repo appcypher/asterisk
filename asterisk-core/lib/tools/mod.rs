@@ -1,10 +1,15 @@
+//! This module contains the tools for the agents.
+
+mod error;
+mod helper;
+mod traits;
+
 //--------------------------------------------------------------------------------------------------
-// Traits
+// Exports
 //--------------------------------------------------------------------------------------------------
 
-/// A tool that an agent can use.
-pub trait Tool {
-    // fn name(&self) -> String;
-    // fn description(&self) -> String;
-    // fn execute(&self, input: &str) -> Result<String, String>;
-}
+pub mod message_box;
+
+pub use error::*;
+pub use helper::*;
+pub use traits::*;

@@ -1,13 +1,18 @@
 //! First attempt at creating a reliable agent.
 
-use tokio::{sync::mpsc, task::JoinHandle};
-use tracing::info;
+use std::collections::HashMap;
 
-use crate::models::{openai::OpenAIModel, TextModel};
+use serde_json::Map;
+use tokio::{sync::mpsc, task::JoinHandle};
+
+use crate::{
+    models::{openai::OpenAIModel, TextModel},
+    tools::{self, message_box::MessageBox, Tool},
+};
 
 use super::{
     ActionMessage, AgentSideChannels, DreamerBuilder, DreamerError, DreamerResult, Memories,
-    Metrics, ThoughtMessage, Thread, ThreadMessage, Tool,
+    Metrics, ThoughtMessage, Thread, ThreadMessage,
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -15,7 +20,10 @@ use super::{
 //--------------------------------------------------------------------------------------------------
 
 /// The system instruction for the dreamer agent.
-const DREAMER_SYSTEM_INSTRUCTION: &str = include_str!("instruction.txt");
+const DREAMER_SYSTEM_INSTRUCTION: &str = include_str!("instructions/dreamer-0.1.1.md");
+
+/// The notification message from the user.
+const NOTIFICATION_USER_MESSAGE: &str = "Message from the user!";
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -32,23 +40,26 @@ const DREAMER_SYSTEM_INSTRUCTION: &str = include_str!("instruction.txt");
 ///    and what its capabilities are.
 ///
 /// 2. **Operating Procedure**: This defines the rules of how the assistant is to operate and interact
-///    with the manager or tools.
+///    with the user or tools.
 ///
 /// 3. **Problem Solving Methodology**: This defines the rules of how the assistant is to solve
 ///    problems and things it must consider when solving them.
 ///
-/// ## The Manager
+/// ## The User
 ///
-/// The manager (a user) is the one that interacts with the agent, giving it instructions and
+/// The user is the one that interacts with the agent, giving it instructions and
 /// providing feedback.
 ///
 /// ## What is Dreamer really?
 ///
-/// You can think of dreamer as an entity dreaming up a story with an external force (the manager)
+/// You can think of dreamer as an entity dreaming up a story with an external force (the user)
 /// adding context to the dream to influence the direction of the dream. `Dreamer` dreams lucidly.
 ///
 /// The system instruction is the initial influence on how the dream should progress, defining an
 /// AI assistant that knows what it is, how it works, and what it is supposed to do.
+///
+// TODO: Relying on context and knowledge base only
+// TODO: General coherence for thoughts and actions.
 #[allow(dead_code)] // TODO: remove this
 pub struct Dreamer {
     /// The model used to generate responses.
@@ -60,11 +71,11 @@ pub struct Dreamer {
     /// The thread of conversation.
     pub(crate) thread: Thread,
 
-    /// The internal tools the assistant has access to.
-    pub(crate) internal_tools: Vec<Box<dyn Tool + Send + Sync>>,
+    /// The tool for reading the user message.
+    pub(crate) message_box: MessageBox,
 
     /// The provided tools the assistant has access to.
-    pub(crate) provided_tools: Vec<Box<dyn Tool + Send + Sync>>,
+    pub(crate) provided_tools: HashMap<String, Box<dyn Tool + Send + Sync>>,
 
     /// Whether the agent is idle.
     pub(crate) idle: bool,
@@ -81,8 +92,8 @@ impl Dreamer {
             model: OpenAIModel::default(),
             memories: Memories::new(),
             thread: Thread::new(DREAMER_SYSTEM_INSTRUCTION),
-            internal_tools: Vec::new(),
-            provided_tools: Vec::new(),
+            message_box: MessageBox::default(),
+            provided_tools: HashMap::new(),
             idle: true,
         }
     }
@@ -98,7 +109,7 @@ impl Dreamer {
             loop {
                 if self.idle {
                     if let Some(message) = channels.message_rx.recv().await {
-                        self.handle_incoming_message(message)?;
+                        self.handle_incoming_message(message, &channels.metrics_tx)?;
                     }
 
                     continue;
@@ -109,7 +120,7 @@ impl Dreamer {
                         self.handle_model_response(response?, &channels.metrics_tx)?;
                     }
                     message = channels.message_rx.recv() => if let Some(message) = message {
-                        self.handle_incoming_message(message)?;
+                        self.handle_incoming_message(message, &channels.metrics_tx)?;
                     }
                 }
             }
@@ -128,9 +139,9 @@ impl Dreamer {
         let message: ThreadMessage = response.parse()?;
 
         // Handle the message based on its type.
-        match &message {
+        match message.clone() {
             ThreadMessage::Thought(thought) => self.handle_thought(thought)?,
-            ThreadMessage::Action(action) => self.handle_action(action)?,
+            ThreadMessage::Action(action) => self.handle_action(action, metrics_tx)?,
             _ => return Err(DreamerError::InvalidResponseMessage(message)),
         }
 
@@ -144,26 +155,68 @@ impl Dreamer {
     }
 
     /// Handles the incoming message.
-    fn handle_incoming_message(&mut self, _message: String) -> DreamerResult<()> {
-        println!("message: {}", _message);
+    fn handle_incoming_message(
+        &mut self,
+        message: String,
+        metrics_tx: &mpsc::UnboundedSender<Metrics>,
+    ) -> DreamerResult<()> {
+        // Update the message box.
+        self.message_box.update_message(message);
+
+        // Extend the thread with the message.
+        let message = ThreadMessage::notification(NOTIFICATION_USER_MESSAGE);
+
+        // Send metrics to the metrics channel.
+        metrics_tx.send(Metrics::ThreadMessage(message.clone()))?;
+
+        // Add message to the thread.
+        self.thread.push_message(message);
+
+        // Make the agent busy.
+        self.make_busy();
+
         Ok(())
     }
 
     /// Handles the thought message.
-    fn handle_thought(&mut self, thought: &ThoughtMessage) -> DreamerResult<()> {
-        if !thought.is_incomplete() {
-            self.make_idle();
-        } else {
+    fn handle_thought(&mut self, thought: ThoughtMessage) -> DreamerResult<()> {
+        if thought.is_incomplete() {
             self.make_busy();
+        } else {
+            self.make_idle();
         }
 
         Ok(())
     }
 
     /// Handles the action message.
-    fn handle_action(&mut self, action: &ActionMessage) -> DreamerResult<()> {
-        info!("TODO: action: {}", action.get_full_content());
-        // TODO: parse and send the action to the outside world
+    fn handle_action(
+        &mut self,
+        action: ActionMessage,
+        metrics_tx: &mpsc::UnboundedSender<Metrics>,
+    ) -> DreamerResult<()> {
+        // Add the action to the thread.
+        self.thread
+            .push_message(ThreadMessage::Action(action.clone()));
+
+        let (name, _args) = tools::parse_tool(action.get_main_content())?;
+        if name == "message_box" {
+            // Execute the tool and get the observation.
+            let observation = self.message_box.execute(Map::new())?;
+
+            // Create the observation message.
+            let message = ThreadMessage::observation(observation);
+
+            // Add observation to the thread.
+            self.thread.push_message(message.clone());
+
+            // Send metrics to the metrics channel.
+            metrics_tx.send(Metrics::ThreadMessage(message))?;
+
+            // Make the agent busy.
+            self.make_busy();
+        }
+
         Ok(())
     }
 

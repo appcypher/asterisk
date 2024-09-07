@@ -1,7 +1,9 @@
 use std::{io::Write, process};
 
-use asterisk_core::agents::dreamer::{
-    channels, ActionMessage, Dreamer, Metrics, ThreadMessage, ACTION_TAG, THOUGHT_TAG,
+use asterisk_core::{
+    agents::dreamer::{channels, ActionMessage, Dreamer, Metrics, ThreadMessage},
+    models::openai::ModelType,
+    utils::{self, Env},
 };
 use colored::{Color, Colorize};
 use crossterm::{
@@ -15,11 +17,7 @@ use tokio::{
     sync::mpsc,
 };
 
-use crate::CliResult;
-
-//--------------------------------------------------------------------------------------------------
-// Types
-//--------------------------------------------------------------------------------------------------
+use crate::{CliError, CliResult};
 
 //--------------------------------------------------------------------------------------------------
 // Functions
@@ -27,8 +25,10 @@ use crate::CliResult;
 
 /// Runs the shell.
 pub async fn run() -> CliResult<()> {
+    utils::load_env(Env::Dev);
+
     // Create the agent
-    let agent = Dreamer::builder().build();
+    let agent = Dreamer::builder().model(ModelType::Gpt4oMini).build();
 
     println!(
         "{}",
@@ -42,15 +42,28 @@ pub async fn run() -> CliResult<()> {
     let (agent_channels, mut external_channels) = channels::create();
 
     // Spawn the agent in a new task
-    agent.run(agent_channels);
+    let mut handle = agent.run(agent_channels);
 
-    // Prompt the user for input
-    prompt(&external_channels.message_tx).await?;
+    // Prompt and send the first message
+    prompt_and_send(&external_channels.message_tx).await?;
 
     // Handle agent actions, metrics
-    tokio::spawn(async move {
+    let mut handle = tokio::spawn(async move {
         loop {
             tokio::select! {
+                result = &mut handle => {
+                    terminal::disable_raw_mode()?;
+                    match result {
+                        Ok(r) => if let Err(e) = r {
+                            return Err(CliError::DreamerError(e));
+                        },
+                        Err(e) => {
+                            return Err(CliError::JoinError(e));
+                        }
+                    }
+
+                    break;
+                }
                 metrics = external_channels.metrics_rx.recv() => if let Some(metrics) = metrics {
                     handle_metric_message(metrics)?;
                 },
@@ -60,18 +73,32 @@ pub async fn run() -> CliResult<()> {
             }
         }
 
-        #[allow(unreachable_code)]
         crate::Ok(())
     });
 
-    // Handle terminal events
+    // Handle terminal events and agent task exit.
     let mut reader = EventStream::new();
     loop {
         terminal::enable_raw_mode()?;
-        if let Some(event) = reader.next().await {
-            handle_terminal_event(event?, &external_channels.message_tx).await?;
+        tokio::select! {
+            event = reader.next() => if let Some(event) = event {
+                handle_terminal_event(event?, &external_channels.message_tx).await?;
+            },
+            result = &mut handle => {
+                terminal::disable_raw_mode()?;
+                match result {
+                    Ok(r) => r?,
+                    Err(e) => {
+                        return Err(CliError::JoinError(e));
+                    }
+                }
+
+                break;
+            }
         }
     }
+
+    Ok(())
 }
 
 fn handle_metric_message(metrics: Metrics) -> CliResult<()> {
@@ -80,12 +107,11 @@ fn handle_metric_message(metrics: Metrics) -> CliResult<()> {
         Metrics::ThreadMessage(message) => match message {
             ThreadMessage::Thought(message) => {
                 println!(
-                    "\n{}{}{}",
-                    " Agent Event:"
-                        .bold()
+                    "\n{}\n{}",
+                    " Agent Thought "
+                        .italic()
                         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
-                        .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR),
-                    THOUGHT_TAG.bold().color(*THOUGHT_TAG_COLOR),
+                        .on_color(*THOUGHT_TAG_COLOR),
                     message
                         .get_main_content()
                         .italic()
@@ -94,16 +120,40 @@ fn handle_metric_message(metrics: Metrics) -> CliResult<()> {
             }
             ThreadMessage::Action(message) => {
                 println!(
-                    "\n{}{}{}",
-                    " Agent Event:"
-                        .bold()
+                    "\n{}\n{}",
+                    " Agent Action "
+                        .italic()
                         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
-                        .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR),
-                    ACTION_TAG.bold().color(*ACTION_TAG_COLOR),
+                        .on_color(*ACTION_TAG_COLOR),
                     message.get_main_content().italic().color(*ACTION_TAG_COLOR)
                 );
             }
-            _ => unreachable!(),
+            ThreadMessage::Notification(message) => {
+                println!(
+                    "\n{}\n{}",
+                    " Agent Notification "
+                        .italic()
+                        .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
+                        .on_color(*NOTIFICATION_TAG_COLOR),
+                    message
+                        .get_main_content()
+                        .italic()
+                        .color(*NOTIFICATION_TAG_COLOR)
+                );
+            }
+            ThreadMessage::Observation(message) => {
+                println!(
+                    "\n{}\n{}",
+                    " Agent Observation "
+                        .italic()
+                        .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
+                        .on_color(*OBSERVATION_TAG_COLOR),
+                    message
+                        .get_main_content()
+                        .italic()
+                        .color(*OBSERVATION_TAG_COLOR)
+                );
+            }
         },
     }
 
@@ -128,17 +178,17 @@ async fn handle_terminal_event(
         }
     }
 
-    prompt(message_tx).await?;
+    // Prompt and send the message
+    prompt_and_send(message_tx).await?;
 
     Ok(())
 }
 
-async fn prompt(message_tx: &mpsc::UnboundedSender<String>) -> CliResult<()> {
+async fn prompt_and_send(message_tx: &mpsc::UnboundedSender<String>) -> CliResult<()> {
     // Print the prompt
     print!(
         "\n{}\n{} ",
         " User Message "
-            .bold()
             .color(*USER_MESSAGE_HEADER_FG_COLOR)
             .on_color(*USER_MESSAGE_HEADER_BG_COLOR),
         ">>>".bold().color(*USER_MESSAGE_HEADER_FG_COLOR)
@@ -167,5 +217,7 @@ lazy_static! {
     static ref USER_MESSAGE_HEADER_BG_COLOR: Color = Color::Green;
     static ref USER_MESSAGE_HEADER_FG_COLOR: Color = Color::White;
     static ref THOUGHT_TAG_COLOR: Color = Color::BrightBlack;
-    static ref ACTION_TAG_COLOR: Color = Color::BrightMagenta;
+    static ref ACTION_TAG_COLOR: Color = Color::BrightCyan;
+    static ref NOTIFICATION_TAG_COLOR: Color = Color::BrightRed;
+    static ref OBSERVATION_TAG_COLOR: Color = Color::BrightGreen;
 }

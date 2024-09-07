@@ -9,16 +9,16 @@ use super::{ContextMessage, DreamerError};
 //--------------------------------------------------------------------------------------------------
 
 /// The tag for thought messages.
-pub const THOUGHT_TAG: &str = "[thought]\n";
+pub const THOUGHT_TAG: &str = "[thought]";
 
 /// The tag for action messages.
-pub const ACTION_TAG: &str = "[action]\n";
+pub const ACTION_TAG: &str = "[action]";
 
 /// The tag for observation messages.
-pub const OBSERVATION_TAG: &str = "[observation]\n";
+pub const OBSERVATION_TAG: &str = "[observation]";
 
 /// The tag for notification messages.
-pub const NOTIFICATION_TAG: &str = "[notification]\n";
+pub const NOTIFICATION_TAG: &str = "[notification]";
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -124,11 +124,33 @@ impl Thread {
     }
 }
 
+impl ThreadMessage {
+    /// Creates a new thought message and tags it.
+    pub fn thought(content: impl Into<String>) -> Self {
+        Self::Thought(ThoughtMessage::new(content))
+    }
+
+    /// Creates a new action message and tags it.
+    pub fn action(content: impl Into<String>) -> Self {
+        Self::Action(ActionMessage::new(content))
+    }
+
+    /// Creates a new observation message and tags it.
+    pub fn observation(content: impl Into<String>) -> Self {
+        Self::Observation(ObservationMessage::new(content))
+    }
+
+    /// Creates a new notification message and tags it.
+    pub fn notification(content: impl Into<String>) -> Self {
+        Self::Notification(NotificationMessage::new(content))
+    }
+}
+
 impl ThoughtMessage {
-    /// Creates a new thought message.
+    /// Creates a new thought message and tags it.
     pub fn new(content: impl Into<String>) -> Self {
         Self {
-            content: THOUGHT_TAG.to_string() + &content.into(),
+            content: THOUGHT_TAG.to_string() + "\n" + &content.into(),
         }
     }
 
@@ -139,7 +161,7 @@ impl ThoughtMessage {
 
     /// Returns the main content of the thought.
     pub fn get_main_content(&self) -> &str {
-        &self.content[THOUGHT_TAG.len()..]
+        self.content[THOUGHT_TAG.len()..].trim_start_matches("\n")
     }
 
     /// Returns true if the thought is incomplete.
@@ -149,10 +171,10 @@ impl ThoughtMessage {
 }
 
 impl ActionMessage {
-    /// Creates a new action message.
+    /// Creates a new action message and tags it.
     pub fn new(content: impl Into<String>) -> Self {
         Self {
-            content: ACTION_TAG.to_string() + &content.into(),
+            content: ACTION_TAG.to_string() + "\n" + &content.into(),
         }
     }
 
@@ -163,15 +185,15 @@ impl ActionMessage {
 
     /// Returns the main content of the action.
     pub fn get_main_content(&self) -> &str {
-        &self.content[ACTION_TAG.len()..]
+        self.content[ACTION_TAG.len()..].trim_start_matches("\n")
     }
 }
 
 impl ObservationMessage {
-    /// Creates a new observation message.
+    /// Creates a new observation message and tags it.
     pub fn new(content: impl Into<String>) -> Self {
         Self {
-            content: OBSERVATION_TAG.to_string() + &content.into(),
+            content: OBSERVATION_TAG.to_string() + "\n" + &content.into(),
         }
     }
 
@@ -182,7 +204,7 @@ impl ObservationMessage {
 
     /// Returns the main content of the observation.
     pub fn get_main_content(&self) -> &str {
-        &self.content[OBSERVATION_TAG.len()..]
+        self.content[OBSERVATION_TAG.len()..].trim_start_matches("\n")
     }
 
     /// Returns true if the observation is incomplete.
@@ -192,10 +214,10 @@ impl ObservationMessage {
 }
 
 impl NotificationMessage {
-    /// Creates a new notification message.
+    /// Creates a new notification message and tags it.
     pub fn new(content: impl Into<String>) -> Self {
         Self {
-            content: NOTIFICATION_TAG.to_string() + &content.into(),
+            content: NOTIFICATION_TAG.to_string() + "\n" + &content.into(),
         }
     }
 
@@ -206,7 +228,7 @@ impl NotificationMessage {
 
     /// Returns the main content of the notification.
     pub fn get_main_content(&self) -> &str {
-        &self.content[NOTIFICATION_TAG.len()..]
+        self.content[NOTIFICATION_TAG.len()..].trim_start_matches("\n")
     }
 }
 
@@ -247,21 +269,27 @@ impl FromStr for ThreadMessage {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.starts_with(THOUGHT_TAG) {
-            return Ok(ThreadMessage::Thought(ThoughtMessage::from_str(s)?));
+            return Ok(ThreadMessage::Thought(ThoughtMessage {
+                content: s.to_string(),
+            }));
         }
 
         if s.starts_with(ACTION_TAG) {
-            return Ok(ThreadMessage::Action(ActionMessage::from_str(s)?));
+            return Ok(ThreadMessage::Action(ActionMessage {
+                content: s.to_string(),
+            }));
         }
 
         if s.starts_with(OBSERVATION_TAG) {
-            return Ok(ThreadMessage::Observation(ObservationMessage::from_str(s)?));
+            return Ok(ThreadMessage::Observation(ObservationMessage {
+                content: s.to_string(),
+            }));
         }
 
         if s.starts_with(NOTIFICATION_TAG) {
-            return Ok(ThreadMessage::Notification(NotificationMessage::from_str(
-                s,
-            )?));
+            return Ok(ThreadMessage::Notification(NotificationMessage {
+                content: s.to_string(),
+            }));
         }
 
         Err(DreamerError::InvalidThreadMessage(s.to_string()))
@@ -321,5 +349,39 @@ impl FromStr for NotificationMessage {
         Ok(NotificationMessage {
             content: s.to_string(),
         })
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+// Tests
+//--------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_agent_dreamer_thread_message_from_str() {
+        let r = ThoughtMessage::from_str("[thought] This is a thought");
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap().content, "[thought] This is a thought");
+
+        let r = ActionMessage::from_str("[action] This is an action");
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap().content, "[action] This is an action");
+
+        let r = ObservationMessage::from_str("[observation] This is an observation");
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap().content, "[observation] This is an observation");
+
+        let r = NotificationMessage::from_str("[notification] This is a notification");
+        assert!(r.is_ok());
+        assert_eq!(r.unwrap().content, "[notification] This is a notification");
+
+        let r = ThreadMessage::from_str("[thought] This is a thought");
+        assert!(r.is_ok());
+
+        let r = ThreadMessage::from_str("This is a thought");
+        assert!(r.is_err());
     }
 }

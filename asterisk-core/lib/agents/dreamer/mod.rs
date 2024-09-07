@@ -7,7 +7,6 @@ mod error;
 mod memories;
 mod metrics;
 mod thread;
-mod tools;
 
 //--------------------------------------------------------------------------------------------------
 // Exports
@@ -23,4 +22,3 @@ pub use error::*;
 pub use memories::*;
 pub use metrics::*;
 pub use thread::*;
-pub use tools::*;

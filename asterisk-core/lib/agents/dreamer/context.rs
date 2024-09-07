@@ -5,7 +5,7 @@ use crate::models::PromptMessage;
 //--------------------------------------------------------------------------------------------------
 
 /// The tag for context messages.
-pub const CONTEXT_TAG: &str = "[context]\n";
+pub const CONTEXT_TAG: &str = "[context]";
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -22,10 +22,10 @@ pub struct ContextMessage {
 //--------------------------------------------------------------------------------------------------
 
 impl ContextMessage {
-    /// Creates a new context message.
+    /// Creates a new context message and tags it.
     pub fn new(content: impl Into<String>) -> Self {
         Self {
-            content: CONTEXT_TAG.to_string() + &content.into(),
+            content: CONTEXT_TAG.to_string() + "\n" + &content.into(),
         }
     }
 
@@ -36,7 +36,7 @@ impl ContextMessage {
 
     /// Returns the main content of the context.
     pub fn get_main_content(&self) -> &str {
-        &self.content[CONTEXT_TAG.len()..]
+        self.content[CONTEXT_TAG.len()..].trim_end_matches('\n')
     }
 }
 

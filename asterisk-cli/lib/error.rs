@@ -1,3 +1,4 @@
+use asterisk_core::agents::dreamer::DreamerError;
 use thiserror::Error;
 use tokio::sync::mpsc;
 
@@ -18,6 +19,14 @@ pub enum CliError {
     /// Message send error.
     #[error("message send error: {0}")]
     MessageSend(#[from] mpsc::error::SendError<String>),
+
+    /// Dreamer agent error.
+    #[error("agent error: {0}")]
+    DreamerError(#[from] DreamerError),
+
+    /// Join error.
+    #[error("join error: {0}")]
+    JoinError(#[from] tokio::task::JoinError),
 }
 
 //--------------------------------------------------------------------------------------------------
