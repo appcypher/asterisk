@@ -1,8 +1,11 @@
-use std::{io::Write, process};
+use std::{env, io::Write, process};
 
 use asterisk_core::{
     agents::dreamer::{channels, ActionMessage, Dreamer, Metrics, ThreadMessage},
-    models::openai::ModelType,
+    models::{
+        openai::{ModelType, OpenAILikeModel, OpenAIModel},
+        ModelResult, Prompt, TextModel,
+    },
     utils::{self, Env},
 };
 use colored::{Color, Colorize};
@@ -20,6 +23,16 @@ use tokio::{
 use crate::{CliError, CliResult};
 
 //--------------------------------------------------------------------------------------------------
+// Types
+//--------------------------------------------------------------------------------------------------
+
+#[derive(Clone)]
+pub enum Model {
+    OpenAIModel(OpenAIModel),
+    OpenAILikeModel(OpenAILikeModel),
+}
+
+//--------------------------------------------------------------------------------------------------
 // Functions
 //--------------------------------------------------------------------------------------------------
 
@@ -27,12 +40,12 @@ use crate::{CliError, CliResult};
 pub async fn run() -> CliResult<()> {
     utils::load_env(Env::Dev);
 
-    // Create the agent
-    let agent = Dreamer::builder().model(ModelType::Gpt4oMini).build();
+    // Create the model behind the agent.
+    let agent = select_agent()?;
 
     println!(
-        "{}",
-        " Dreamer Agent Initialized "
+        "\n{}",
+        " dreamer agent initialized "
             .bold()
             .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
             .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR)
@@ -108,7 +121,7 @@ fn handle_metric_message(metrics: Metrics) -> CliResult<()> {
             ThreadMessage::Thought(message) => {
                 println!(
                     "\n{}\n{}",
-                    " Agent Thought "
+                    " agent thought "
                         .italic()
                         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
                         .on_color(*THOUGHT_TAG_COLOR),
@@ -119,19 +132,20 @@ fn handle_metric_message(metrics: Metrics) -> CliResult<()> {
                 );
             }
             ThreadMessage::Action(message) => {
+                let pretty_message = jsonxf::pretty_print(message.get_main_content()).unwrap();
                 println!(
                     "\n{}\n{}",
-                    " Agent Action "
+                    " agent action "
                         .italic()
                         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
                         .on_color(*ACTION_TAG_COLOR),
-                    message.get_main_content().italic().color(*ACTION_TAG_COLOR)
+                    pretty_message.italic().color(*ACTION_TAG_COLOR)
                 );
             }
             ThreadMessage::Notification(message) => {
                 println!(
                     "\n{}\n{}",
-                    " Agent Notification "
+                    " agent notification "
                         .italic()
                         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
                         .on_color(*NOTIFICATION_TAG_COLOR),
@@ -144,7 +158,7 @@ fn handle_metric_message(metrics: Metrics) -> CliResult<()> {
             ThreadMessage::Observation(message) => {
                 println!(
                     "\n{}\n{}",
-                    " Agent Observation "
+                    " agent observation "
                         .italic()
                         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
                         .on_color(*OBSERVATION_TAG_COLOR),
@@ -188,7 +202,7 @@ async fn prompt_and_send(message_tx: &mpsc::UnboundedSender<String>) -> CliResul
     // Print the prompt
     print!(
         "\n{}\n{} ",
-        " User Message "
+        " user message "
             .color(*USER_MESSAGE_HEADER_FG_COLOR)
             .on_color(*USER_MESSAGE_HEADER_BG_COLOR),
         ">>>".bold().color(*USER_MESSAGE_HEADER_FG_COLOR)
@@ -207,17 +221,118 @@ async fn prompt_and_send(message_tx: &mpsc::UnboundedSender<String>) -> CliResul
     Ok(())
 }
 
+fn select_agent() -> CliResult<Dreamer<Model>> {
+    println!("{}\n", " choose a model: ".bold().black().on_bright_cyan());
+    println!("{} gpt-4o", " 1.".bold().black().on_white());
+    println!("{} gpt-4o-mini", " 2.".bold().black().on_white());
+    println!(
+        "{} llama-3-1-8b (together)",
+        " 3.".bold().black().on_white()
+    );
+    println!(
+        "{} llama-3-1-70b (together)",
+        " 4.".bold().black().on_white()
+    );
+    print!(">>> ");
+    std::io::stdout().flush().unwrap();
+
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input).unwrap();
+
+    let model: Model = match input.trim() {
+        "1" => Model::OpenAIModel(
+            OpenAIModel::builder()
+                .seed(0)
+                .model(ModelType::Gpt4o_2024_08_06)
+                .build(),
+        ),
+        "" | "2" => Model::OpenAIModel(
+            OpenAIModel::builder()
+                .seed(0)
+                .model(ModelType::Gpt4oMini_2024_07_18)
+                .build(),
+        ),
+        "3" => Model::OpenAILikeModel(
+            OpenAILikeModel::builder()
+                .api_key(env::var("TOGETHER_API_KEY").unwrap())
+                .base_url(TOGETHER_URL)
+                .seed(0)
+                .model(TOGETHER_LLAMA_3_1_8B_MODEL)
+                .build(),
+        ),
+        "4" => Model::OpenAILikeModel(
+            OpenAILikeModel::builder()
+                .api_key(env::var("TOGETHER_API_KEY").unwrap())
+                .base_url(TOGETHER_URL)
+                .seed(0)
+                .model(TOGETHER_LLAMA_3_1_70B_MODEL)
+                .build(),
+        ),
+        _ => return Err(CliError::InvalidModel(input.trim().to_string())),
+    };
+
+    println!(
+        "\n{}{}",
+        (String::from(" ") + &model.get_model())
+            .bold()
+            .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
+            .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR),
+        " selected "
+            .bold()
+            .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
+            .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR)
+    );
+
+    let agent = Dreamer::builder().model(model).build();
+
+    Ok(agent)
+}
+
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
 
 lazy_static! {
-    static ref SYSTEM_MESSAGE_HEADER_BG_COLOR: Color = Color::Magenta;
-    static ref SYSTEM_MESSAGE_HEADER_FG_COLOR: Color = Color::White;
+    static ref SYSTEM_MESSAGE_HEADER_BG_COLOR: Color = Color::BrightMagenta;
+    static ref SYSTEM_MESSAGE_HEADER_FG_COLOR: Color = Color::Black;
     static ref USER_MESSAGE_HEADER_BG_COLOR: Color = Color::Green;
-    static ref USER_MESSAGE_HEADER_FG_COLOR: Color = Color::White;
+    static ref USER_MESSAGE_HEADER_FG_COLOR: Color = Color::Black;
     static ref THOUGHT_TAG_COLOR: Color = Color::BrightBlack;
     static ref ACTION_TAG_COLOR: Color = Color::BrightCyan;
-    static ref NOTIFICATION_TAG_COLOR: Color = Color::BrightRed;
+    static ref NOTIFICATION_TAG_COLOR: Color = Color::BrightYellow;
     static ref OBSERVATION_TAG_COLOR: Color = Color::BrightGreen;
+}
+
+// const FIREWORKS_URL: &str = "https://api.fireworks.ai/v1/chat/completions";
+// const FIREWORKS_LLAMA_3_1_8B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-8b-instruct";
+// const FIREWORKS_LLAMA_3_1_70B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-70b-instruct";
+
+const TOGETHER_URL: &str = "https://api.together.xyz/v1/chat/completions";
+const TOGETHER_LLAMA_3_1_8B_MODEL: &str = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo";
+const TOGETHER_LLAMA_3_1_70B_MODEL: &str = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
+
+//--------------------------------------------------------------------------------------------------
+// Methods
+//--------------------------------------------------------------------------------------------------
+
+impl Model {
+    pub fn get_model(&self) -> String {
+        match self {
+            Model::OpenAIModel(model) => model.get_config().model.clone(),
+            Model::OpenAILikeModel(model) => model.get_config().model.clone(),
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+// Trait Implementations
+//--------------------------------------------------------------------------------------------------
+
+impl TextModel for Model {
+    async fn prompt(&self, prompt: impl Into<Prompt> + Send) -> ModelResult<String> {
+        match self {
+            Model::OpenAIModel(model) => model.prompt(prompt).await,
+            Model::OpenAILikeModel(model) => model.prompt(prompt).await,
+        }
+    }
 }

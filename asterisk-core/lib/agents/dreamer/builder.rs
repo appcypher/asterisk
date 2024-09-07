@@ -1,31 +1,30 @@
 use std::collections::HashMap;
 
 use crate::{
-    models::openai::{ModelType, OpenAIModel},
-    tools::Tool,
+    models::TextModel,
+    tools::{message_box::MessageBox, Tool},
 };
 
-use super::Dreamer;
+use super::{Dreamer, Memories, Thread, DREAMER_SYSTEM_INSTRUCTION};
 
 //--------------------------------------------------------------------------------------------------
 // Types
 //--------------------------------------------------------------------------------------------------
 
 /// The builder for a `Dreamer`.
-#[derive(Default)]
-pub struct DreamerBuilder {
+pub struct DreamerBuilder<M> {
     /// The tools for the dreamer.
     tools: HashMap<String, Box<dyn Tool + Send + Sync>>,
 
-    /// The type of model to use.
-    model: Option<ModelType>,
+    /// The model for the dreamer.
+    model: M,
 }
 
 //--------------------------------------------------------------------------------------------------
 // Methods
 //--------------------------------------------------------------------------------------------------
 
-impl DreamerBuilder {
+impl<M> DreamerBuilder<M> {
     /// Sets the tools for the dreamer.
     pub fn tools(
         self,
@@ -38,21 +37,24 @@ impl DreamerBuilder {
     }
 
     /// Sets the model for the dreamer.
-    pub fn model(self, model: ModelType) -> Self {
+    pub fn model<N: TextModel>(self, model: N) -> DreamerBuilder<N> {
         DreamerBuilder {
-            model: Some(model),
-            ..self
+            tools: self.tools,
+            model,
         }
     }
+}
 
+impl<M: TextModel> DreamerBuilder<M> {
     /// Builds the dreamer.
-    pub fn build(self) -> Dreamer {
+    pub fn build(self) -> Dreamer<M> {
         Dreamer {
             provided_tools: self.tools,
-            model: OpenAIModel::builder()
-                .model(self.model.unwrap_or_default())
-                .build(),
-            ..Default::default()
+            model: self.model,
+            memories: Memories::new(),
+            thread: Thread::new(DREAMER_SYSTEM_INSTRUCTION),
+            message_box: MessageBox::default(),
+            idle: true,
         }
     }
 }
@@ -60,3 +62,12 @@ impl DreamerBuilder {
 //--------------------------------------------------------------------------------------------------
 // Trait Implementations
 //--------------------------------------------------------------------------------------------------
+
+impl Default for DreamerBuilder<()> {
+    fn default() -> Self {
+        DreamerBuilder {
+            tools: HashMap::new(),
+            model: (),
+        }
+    }
+}

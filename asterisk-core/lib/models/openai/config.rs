@@ -129,12 +129,20 @@ pub enum ModelType {
     /// The GPT-4o 2024-08-06 model.
     #[serde(rename = "gpt-4o-2024-08-06")]
     #[strum(to_string = "gpt-4o-2024-08-06")]
-    Gpt4o2024_08_06,
+    #[allow(non_camel_case_types)]
+    Gpt4o_2024_08_06,
 
     /// The GPT-4o 2024-05-13 model.
     #[serde(rename = "gpt-4o-2024-05-13")]
     #[strum(to_string = "gpt-4o-2024-05-13")]
-    Gpt4o2024_05_13,
+    #[allow(non_camel_case_types)]
+    Gpt4o_2024_05_13,
+
+    /// The GPT-4o mini 2024-07-18 model.
+    #[serde(rename = "gpt-4o-mini-2024-07-18")]
+    #[strum(to_string = "gpt-4o-mini-2024-07-18")]
+    #[allow(non_camel_case_types)]
+    Gpt4oMini_2024_07_18,
 
     /// The GPT-4 turbo model.
     #[serde(rename = "gpt-4-turbo")]
@@ -145,16 +153,6 @@ pub enum ModelType {
     #[serde(rename = "gpt-4")]
     #[strum(to_string = "gpt-4")]
     Gpt4,
-
-    /// The GPT-3.5 turbo model.
-    #[serde(rename = "gpt-3.5-turbo")]
-    #[strum(to_string = "gpt-3.5-turbo")]
-    Gpt3_5Turbo,
-
-    /// The GPT-3.5 turbo 16k model.
-    #[serde(rename = "gpt-3.5-turbo-16k")]
-    #[strum(to_string = "gpt-3.5-turbo-16k")]
-    Gpt3_5Turbo16k,
 }
 
 /// Specifies the latency tier to use for processing the request.

@@ -1,4 +1,8 @@
+use std::str::FromStr;
+
 use crate::models::PromptMessage;
+
+use super::DreamerError;
 
 //--------------------------------------------------------------------------------------------------
 // Constant
@@ -36,7 +40,7 @@ impl ContextMessage {
 
     /// Returns the main content of the context.
     pub fn get_main_content(&self) -> &str {
-        self.content[CONTEXT_TAG.len()..].trim_end_matches('\n')
+        self.content[CONTEXT_TAG.len()..].trim_start()
     }
 }
 
@@ -47,5 +51,21 @@ impl ContextMessage {
 impl From<ContextMessage> for PromptMessage {
     fn from(message: ContextMessage) -> Self {
         PromptMessage::assistant(message.content)
+    }
+}
+
+impl FromStr for ContextMessage {
+    type Err = DreamerError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim_start();
+
+        if !s.starts_with(CONTEXT_TAG) {
+            return Err(DreamerError::InvalidContextMessage(s.to_string()));
+        }
+
+        Ok(ContextMessage {
+            content: s.to_string(),
+        })
     }
 }

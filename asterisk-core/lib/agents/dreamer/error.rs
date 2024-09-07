@@ -15,6 +15,10 @@ pub type DreamerResult<T> = Result<T, DreamerError>;
 /// Error type for the dreamer agent operations.
 #[derive(Debug, Error)]
 pub enum DreamerError {
+    /// Invalid context message.
+    #[error("invalid context message: {0}")]
+    InvalidContextMessage(String),
+
     /// Invalid observation message.
     #[error("invalid observation message: {0}")]
     InvalidObservationMessage(String),

@@ -7,6 +7,7 @@ use std::vec::IntoIter;
 use super::openai::{RequestMessage, RequestMessages};
 
 /// A prompt is collection of messages that serves as input to the model.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Prompt {
     messages: Vec<PromptMessage>,
 }

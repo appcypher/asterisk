@@ -153,7 +153,10 @@ pub struct ResponseOk {
     /// This fingerprint represents the backend configuration that the model runs with.
     /// Can be used in conjunction with the seed request parameter to understand when backend
     /// changes have been made that might impact determinism.
-    pub system_fingerprint: String,
+    ///
+    /// Optional because this is not available in some OpenAI compatible APIs like
+    /// TogetherAI's.
+    pub system_fingerprint: Option<String>,
 
     /// The object type, which is always `chat.completion`.
     pub object: String,
@@ -185,7 +188,10 @@ pub struct ResponseChunkOk {
     /// This fingerprint represents the backend configuration that the model runs with.
     /// Can be used in conjunction with the seed request parameter to understand when backend
     /// changes have been made that might impact determinism.
-    pub system_fingerprint: String,
+    ///
+    /// Optional because this is not available in some OpenAI compatible APIs like
+    /// TogetherAI's.
+    pub system_fingerprint: Option<String>,
 
     /// The object type, which is always `chat.completion`.
     pub object: String,
@@ -198,7 +204,10 @@ pub struct ResponseChunkOk {
 #[derive(Debug, Deserialize, Error)]
 pub struct ErrorInfo {
     /// The error code.
-    pub code: String,
+    ///
+    /// Optional because this is not available in some OpenAI compatible APIs like
+    /// TogetherAI's.
+    pub code: Option<String>,
 
     /// The error message.
     pub message: String,

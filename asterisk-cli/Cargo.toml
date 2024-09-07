@@ -18,6 +18,7 @@ clap.workspace = true
 colored.workspace = true
 crossterm = { version = "0.28.1", features = ["event-stream"] }
 futures-util.workspace = true
+jsonxf = "1.1.1"
 lazy_static = "1.5.0"
 thiserror.workspace = true
 tokio.workspace = true

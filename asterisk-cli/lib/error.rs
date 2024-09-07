@@ -1,4 +1,4 @@
-use asterisk_core::agents::dreamer::DreamerError;
+use asterisk_core::{agents::dreamer::DreamerError, models::ModelError};
 use thiserror::Error;
 use tokio::sync::mpsc;
 
@@ -27,6 +27,14 @@ pub enum CliError {
     /// Join error.
     #[error("join error: {0}")]
     JoinError(#[from] tokio::task::JoinError),
+
+    /// Model error.
+    #[error("model error: {0}")]
+    ModelError(#[from] ModelError),
+
+    /// Invalid model error.
+    #[error("invalid model: {0}")]
+    InvalidModel(String),
 }
 
 //--------------------------------------------------------------------------------------------------

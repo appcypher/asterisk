@@ -161,7 +161,7 @@ impl ThoughtMessage {
 
     /// Returns the main content of the thought.
     pub fn get_main_content(&self) -> &str {
-        self.content[THOUGHT_TAG.len()..].trim_start_matches("\n")
+        self.content[THOUGHT_TAG.len()..].trim_start()
     }
 
     /// Returns true if the thought is incomplete.
@@ -185,7 +185,7 @@ impl ActionMessage {
 
     /// Returns the main content of the action.
     pub fn get_main_content(&self) -> &str {
-        self.content[ACTION_TAG.len()..].trim_start_matches("\n")
+        self.content[ACTION_TAG.len()..].trim_start()
     }
 }
 
@@ -204,7 +204,7 @@ impl ObservationMessage {
 
     /// Returns the main content of the observation.
     pub fn get_main_content(&self) -> &str {
-        self.content[OBSERVATION_TAG.len()..].trim_start_matches("\n")
+        self.content[OBSERVATION_TAG.len()..].trim_start()
     }
 
     /// Returns true if the observation is incomplete.
@@ -228,7 +228,7 @@ impl NotificationMessage {
 
     /// Returns the main content of the notification.
     pub fn get_main_content(&self) -> &str {
-        self.content[NOTIFICATION_TAG.len()..].trim_start_matches("\n")
+        self.content[NOTIFICATION_TAG.len()..].trim_start()
     }
 }
 
@@ -239,10 +239,10 @@ impl NotificationMessage {
 impl From<ThreadMessage> for PromptMessage {
     fn from(message: ThreadMessage) -> Self {
         match message {
-            ThreadMessage::Observation(message) => PromptMessage::assistant(message.content),
             ThreadMessage::Thought(message) => PromptMessage::assistant(message.content),
             ThreadMessage::Action(message) => PromptMessage::assistant(message.content),
-            ThreadMessage::Notification(message) => PromptMessage::assistant(message.content),
+            ThreadMessage::Observation(message) => PromptMessage::user(message.content),
+            ThreadMessage::Notification(message) => PromptMessage::user(message.content),
         }
     }
 }
@@ -268,6 +268,8 @@ impl FromStr for ThreadMessage {
     type Err = DreamerError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim_start();
+
         if s.starts_with(THOUGHT_TAG) {
             return Ok(ThreadMessage::Thought(ThoughtMessage {
                 content: s.to_string(),
@@ -300,6 +302,7 @@ impl FromStr for ObservationMessage {
     type Err = DreamerError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim_start();
         if !s.starts_with(OBSERVATION_TAG) {
             return Err(DreamerError::InvalidObservationMessage(s.to_string()));
         }
@@ -314,6 +317,8 @@ impl FromStr for ThoughtMessage {
     type Err = DreamerError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim_start();
+
         if !s.starts_with(THOUGHT_TAG) {
             return Err(DreamerError::InvalidThoughtMessage(s.to_string()));
         }
@@ -342,6 +347,8 @@ impl FromStr for NotificationMessage {
     type Err = DreamerError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim_start();
+
         if !s.starts_with(NOTIFICATION_TAG) {
             return Err(DreamerError::InvalidNotificationMessage(s.to_string()));
         }

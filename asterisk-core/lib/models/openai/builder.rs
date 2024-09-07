@@ -77,9 +77,9 @@ impl<U, M> ModelBuilder<U, M> {
     }
 
     /// The base URL for making requests to the OpenAI-like API.
-    pub fn base_url(self, base_url: String) -> OpenAILikeModelBuilder<M> {
+    pub fn base_url(self, base_url: impl Into<String>) -> OpenAILikeModelBuilder<M> {
         ModelBuilder {
-            base_url,
+            base_url: base_url.into(),
             model: self.model,
             api_key: self.api_key,
             frequency_penalty: self.frequency_penalty,

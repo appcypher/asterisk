@@ -18,6 +18,7 @@ use super::{
 //--------------------------------------------------------------------------------------------------
 
 /// `OpenAIModel` is a type that can prompt and stream responses from models provided by OpenAI.
+#[derive(Clone)]
 pub struct OpenAIModel {
     pub(crate) config: Cow<'static, Config>,
     pub(crate) base_url: String,
@@ -25,6 +26,7 @@ pub struct OpenAIModel {
 
 /// `OpenAILikeModel` is a type that can prompt and stream responses from models that are compatible
 /// with the OpenAI API.
+#[derive(Clone)]
 pub struct OpenAILikeModel(pub(crate) OpenAIModel);
 
 //--------------------------------------------------------------------------------------------------
@@ -49,7 +51,8 @@ impl OpenAIModel {
             });
 
         let response = request.send().await?;
-        let body: ResponseBody = response.json().await?;
+        let body = response.text().await?;
+        let body: ResponseBody = serde_json::from_str(&body)?;
         let ResponseBody::Ok(body) = body else {
             return Err(ModelError::OpenAIResponseError(body.unwrap_err()));
         };
@@ -118,6 +121,11 @@ impl OpenAIModel {
             .clone()
             .unwrap_or_default()
     }
+
+    /// Get the model's configuration
+    pub fn get_config(&self) -> &Config {
+        &self.config
+    }
 }
 
 impl OpenAILikeModel {
@@ -133,6 +141,11 @@ impl OpenAILikeModel {
             base_url,
         })
     }
+
+    /// Get the model's configuration
+    pub fn get_config(&self) -> &Config {
+        &self.0.config
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -140,7 +153,7 @@ impl OpenAILikeModel {
 //--------------------------------------------------------------------------------------------------
 
 impl TextModel for OpenAIModel {
-    async fn prompt(&self, prompt: impl Into<Prompt>) -> ModelResult<String> {
+    async fn prompt(&self, prompt: impl Into<Prompt> + Send) -> ModelResult<String> {
         let response = self.call(prompt.into()).await?;
         let content = Self::extract_content_from_response(&response);
         Ok(content)
@@ -150,7 +163,7 @@ impl TextModel for OpenAIModel {
 impl TextStreamModel for OpenAIModel {
     async fn prompt_stream(
         &self,
-        prompt: impl Into<Prompt>,
+        prompt: impl Into<Prompt> + Send,
     ) -> ModelResult<BoxStream<'static, ModelResult<String>>> {
         let stream = self.call_streaming(prompt.into())?;
         Ok(Box::pin(stream))
@@ -158,7 +171,7 @@ impl TextStreamModel for OpenAIModel {
 }
 
 impl TextModel for OpenAILikeModel {
-    async fn prompt(&self, prompt: impl Into<Prompt>) -> ModelResult<String> {
+    async fn prompt(&self, prompt: impl Into<Prompt> + Send) -> ModelResult<String> {
         self.0.prompt(prompt).await
     }
 }
@@ -166,7 +179,7 @@ impl TextModel for OpenAILikeModel {
 impl TextStreamModel for OpenAILikeModel {
     async fn prompt_stream(
         &self,
-        prompt: impl Into<Prompt>,
+        prompt: impl Into<Prompt> + Send,
     ) -> ModelResult<BoxStream<'static, ModelResult<String>>> {
         self.0.prompt_stream(prompt).await
     }

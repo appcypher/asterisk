@@ -15,15 +15,15 @@ use super::{
     Metrics, ThoughtMessage, Thread, ThreadMessage,
 };
 
-//--------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 // Constant
 //--------------------------------------------------------------------------------------------------
 
 /// The system instruction for the dreamer agent.
-const DREAMER_SYSTEM_INSTRUCTION: &str = include_str!("instructions/dreamer-0.1.1.md");
+pub const DREAMER_SYSTEM_INSTRUCTION: &str = include_str!("instructions/dreamer-0.1.1.md");
 
 /// The notification message from the user.
-const NOTIFICATION_USER_MESSAGE: &str = "Message from the user!";
+pub const NOTIFICATION_USER_MESSAGE: &str = "Message from the user!";
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -61,9 +61,9 @@ const NOTIFICATION_USER_MESSAGE: &str = "Message from the user!";
 // TODO: Relying on context and knowledge base only
 // TODO: General coherence for thoughts and actions.
 #[allow(dead_code)] // TODO: remove this
-pub struct Dreamer {
+pub struct Dreamer<M = OpenAIModel> {
     /// The model used to generate responses.
-    pub(crate) model: OpenAIModel,
+    pub(crate) model: M,
 
     /// The memories of the assistant.
     pub(crate) memories: Memories,
@@ -86,10 +86,17 @@ pub struct Dreamer {
 //--------------------------------------------------------------------------------------------------
 
 impl Dreamer {
-    /// Creates a new `Dreamer` with the given system instruction.
-    pub fn new() -> Self {
+    /// Creates a new `Dreamer` builder.
+    pub fn builder() -> DreamerBuilder<()> {
+        DreamerBuilder::default()
+    }
+}
+
+impl<M> Dreamer<M> {
+    /// Creates a new `Dreamer` with specified model.
+    pub fn new(model: M) -> Self {
         Self {
-            model: OpenAIModel::default(),
+            model,
             memories: Memories::new(),
             thread: Thread::new(DREAMER_SYSTEM_INSTRUCTION),
             message_box: MessageBox::default(),
@@ -98,16 +105,15 @@ impl Dreamer {
         }
     }
 
-    /// Creates a new `Dreamer` builder.
-    pub fn builder() -> DreamerBuilder {
-        DreamerBuilder::default()
-    }
-
     /// Runs the agent.
-    pub fn run(mut self, mut channels: AgentSideChannels) -> JoinHandle<DreamerResult<()>> {
+    pub fn run(mut self, mut channels: AgentSideChannels) -> JoinHandle<DreamerResult<()>>
+    where
+        M: TextModel + Send + Sync + 'static,
+    {
         tokio::spawn(async move {
             loop {
                 if self.idle {
+                    // Check if there is an incoming message from the outside world
                     if let Some(message) = channels.message_rx.recv().await {
                         self.handle_incoming_message(message, &channels.metrics_tx)?;
                     }
@@ -116,9 +122,11 @@ impl Dreamer {
                 }
 
                 tokio::select! {
+                    // API call to the LLM
                     response = self.call() => {
                         self.handle_model_response(response?, &channels.metrics_tx)?;
                     }
+                    // Incoming message from the outside world
                     message = channels.message_rx.recv() => if let Some(message) = message {
                         self.handle_incoming_message(message, &channels.metrics_tx)?;
                     }
@@ -128,7 +136,7 @@ impl Dreamer {
     }
 }
 
-impl Dreamer {
+impl<M> Dreamer<M> {
     /// Handles the model response.
     fn handle_model_response(
         &mut self,
@@ -140,13 +148,10 @@ impl Dreamer {
 
         // Handle the message based on its type.
         match message.clone() {
-            ThreadMessage::Thought(thought) => self.handle_thought(thought)?,
+            ThreadMessage::Thought(thought) => self.handle_thought(thought, metrics_tx)?,
             ThreadMessage::Action(action) => self.handle_action(action, metrics_tx)?,
             _ => return Err(DreamerError::InvalidResponseMessage(message)),
         }
-
-        // Send metrics to the metrics channel.
-        metrics_tx.send(Metrics::ThreadMessage(message.clone()))?;
 
         // Add message to the thread.
         self.thread.push_message(message);
@@ -179,7 +184,16 @@ impl Dreamer {
     }
 
     /// Handles the thought message.
-    fn handle_thought(&mut self, thought: ThoughtMessage) -> DreamerResult<()> {
+    fn handle_thought(
+        &mut self,
+        thought: ThoughtMessage,
+        metrics_tx: &mpsc::UnboundedSender<Metrics>,
+    ) -> DreamerResult<()> {
+        // Send metrics to the metrics channel.
+        metrics_tx.send(Metrics::ThreadMessage(ThreadMessage::Thought(
+            thought.clone(),
+        )))?;
+
         if thought.is_incomplete() {
             self.make_busy();
         } else {
@@ -200,6 +214,7 @@ impl Dreamer {
             .push_message(ThreadMessage::Action(action.clone()));
 
         let (name, _args) = tools::parse_tool(action.get_main_content())?;
+
         if name == "message_box" {
             // Execute the tool and get the observation.
             let observation = self.message_box.execute(Map::new())?;
@@ -207,21 +222,28 @@ impl Dreamer {
             // Create the observation message.
             let message = ThreadMessage::observation(observation);
 
-            // Add observation to the thread.
-            self.thread.push_message(message.clone());
-
             // Send metrics to the metrics channel.
-            metrics_tx.send(Metrics::ThreadMessage(message))?;
+            metrics_tx.send(Metrics::ThreadMessage(message.clone()))?;
+
+            // Add observation to the thread.
+            self.thread.push_message(message);
 
             // Make the agent busy.
             self.make_busy();
+
+            return Ok(());
         }
+
+        self.make_idle();
 
         Ok(())
     }
 
     /// Calls the model by sending the thread to the model and receiving a response.
-    async fn call(&self) -> DreamerResult<String> {
+    async fn call(&self) -> DreamerResult<String>
+    where
+        M: TextModel + Send + Sync + 'static,
+    {
         self.model
             .prompt(self.thread.clone())
             .await
@@ -236,16 +258,6 @@ impl Dreamer {
     /// Makes the agent busy.
     fn make_busy(&mut self) {
         self.idle = false;
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
-// Trait Implementations
-//--------------------------------------------------------------------------------------------------
-
-impl Default for Dreamer {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
