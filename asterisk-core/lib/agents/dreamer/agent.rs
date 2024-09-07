@@ -213,6 +213,11 @@ impl<M> Dreamer<M> {
         self.thread
             .push_message(ThreadMessage::Action(action.clone()));
 
+        // Send metrics to the metrics channel.
+        metrics_tx.send(Metrics::ThreadMessage(ThreadMessage::Action(
+            action.clone(),
+        )))?;
+
         let (name, _args) = tools::parse_tool(action.get_main_content())?;
 
         if name == "message_box" {

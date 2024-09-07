@@ -222,7 +222,13 @@ async fn prompt_and_send(message_tx: &mpsc::UnboundedSender<String>) -> CliResul
 }
 
 fn select_agent() -> CliResult<Dreamer<Model>> {
-    println!("{}\n", " choose a model: ".bold().black().on_bright_cyan());
+    println!(
+        "{}\n",
+        " choose a model: "
+            .bold()
+            .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
+            .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR)
+    );
     println!("{} gpt-4o", " 1.".bold().black().on_white());
     println!("{} gpt-4o-mini", " 2.".bold().black().on_white());
     println!(
