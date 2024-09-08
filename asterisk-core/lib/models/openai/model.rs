@@ -1,7 +1,7 @@
 use std::{borrow::Cow, ops::Deref};
 
 use futures::stream::BoxStream;
-use tracing::info;
+use tracing::debug;
 
 use crate::models::{
     openai::{StreamOptions, OPENAI_API_URL},
@@ -52,6 +52,7 @@ impl OpenAIModel {
 
         let response = request.send().await?;
         let body = response.text().await?;
+        debug!("body = {body}");
         let body: ResponseBody = serde_json::from_str(&body)?;
         let ResponseBody::Ok(body) = body else {
             return Err(ModelError::OpenAIResponseError(body.unwrap_err()));
@@ -105,7 +106,7 @@ impl OpenAIModel {
 
     /// Extract main content from response
     pub(crate) fn extract_content_from_response(response: &ResponseOk) -> String {
-        info!("response = {response:#?}");
+        debug!("response = {response:#?}");
         response.choices[0]
             .message
             .content

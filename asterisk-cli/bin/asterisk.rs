@@ -7,6 +7,8 @@ use clap::{CommandFactory, Parser};
 
 #[tokio::main]
 async fn main() -> CliResult<()> {
+    tracing_subscriber::fmt::init();
+
     // Parse command line arguments
     match AsteriskArgs::parse().subcommand {
         Some(Subcommand::Serve {}) => {

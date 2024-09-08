@@ -126,6 +126,7 @@ dependencies = [
  "lazy_static",
  "thiserror",
  "tokio",
+ "tracing-subscriber",
 ]
 
 [[package]]

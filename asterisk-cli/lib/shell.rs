@@ -43,13 +43,7 @@ pub async fn run() -> CliResult<()> {
     // Create the model behind the agent.
     let agent = select_agent()?;
 
-    println!(
-        "\n{}",
-        " dreamer agent initialized "
-            .bold()
-            .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
-            .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR)
-    );
+    println!("\n{}", "dreamer agent initialized ".italic().dimmed());
 
     // Create channels for the agent and external communication
     let (agent_channels, mut external_channels) = channels::create();
@@ -239,6 +233,15 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
         "{} llama-3-1-70b (together)",
         " 4.".bold().black().on_white()
     );
+    println!(
+        "{} llama-3-1-8b (fireworks)",
+        " 5.".bold().black().on_white()
+    );
+    println!(
+        "{} llama-3-1-70b (fireworks)",
+        " 6.".bold().black().on_white()
+    );
+    println!("{} llama-3-8b (groq)", " 7.".bold().black().on_white());
     print!(">>> ");
     std::io::stdout().flush().unwrap();
 
@@ -250,12 +253,14 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
             OpenAIModel::builder()
                 .seed(0)
                 .model(ModelType::Gpt4o_2024_08_06)
+                .temperature(0.)
                 .build(),
         ),
         "" | "2" => Model::OpenAIModel(
             OpenAIModel::builder()
                 .seed(0)
                 .model(ModelType::Gpt4oMini_2024_07_18)
+                .temperature(0.)
                 .build(),
         ),
         "3" => Model::OpenAILikeModel(
@@ -264,6 +269,7 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
                 .base_url(TOGETHER_URL)
                 .seed(0)
                 .model(TOGETHER_LLAMA_3_1_8B_MODEL)
+                .temperature(0.)
                 .build(),
         ),
         "4" => Model::OpenAILikeModel(
@@ -272,21 +278,52 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
                 .base_url(TOGETHER_URL)
                 .seed(0)
                 .model(TOGETHER_LLAMA_3_1_70B_MODEL)
+                .temperature(0.)
+                .build(),
+        ),
+        "5" => Model::OpenAILikeModel(
+            OpenAILikeModel::builder()
+                .api_key(env::var("FIREWORKS_API_KEY").unwrap())
+                .base_url(FIREWORKS_URL)
+                .model(FIREWORKS_LLAMA_3_1_8B_MODEL)
+                .temperature(0.)
+                .build(),
+        ),
+        "6" => Model::OpenAILikeModel(
+            OpenAILikeModel::builder()
+                .api_key(env::var("FIREWORKS_API_KEY").unwrap())
+                .base_url(FIREWORKS_URL)
+                .model(FIREWORKS_LLAMA_3_1_70B_MODEL)
+                .temperature(0.)
+                .build(),
+        ),
+        "7" => Model::OpenAILikeModel(
+            OpenAILikeModel::builder()
+                .api_key(env::var("GROQ_API_KEY").unwrap())
+                .base_url(GROQ_URL)
+                .seed(0)
+                .model(GROQ_LLAMA_3_8B_MODEL)
+                .temperature(0.)
                 .build(),
         ),
         _ => return Err(CliError::InvalidModel(input.trim().to_string())),
     };
 
+    // println!(
+    //     "\n{}{}",
+    //     (String::from(" ") + &model.get_model())
+    //         .bold()
+    //         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
+    //         .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR),
+    //     " selected "
+    //         .bold()
+    //         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
+    //         .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR)
+    // );
     println!(
         "\n{}{}",
-        (String::from(" ") + &model.get_model())
-            .bold()
-            .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
-            .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR),
-        " selected "
-            .bold()
-            .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
-            .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR)
+        model.get_model().italic().dimmed(),
+        " selected ".italic().dimmed()
     );
 
     let agent = Dreamer::builder().model(model).build();
@@ -299,7 +336,7 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
 //--------------------------------------------------------------------------------------------------
 
 lazy_static! {
-    static ref SYSTEM_MESSAGE_HEADER_BG_COLOR: Color = Color::BrightMagenta;
+    static ref SYSTEM_MESSAGE_HEADER_BG_COLOR: Color = Color::BrightCyan;
     static ref SYSTEM_MESSAGE_HEADER_FG_COLOR: Color = Color::Black;
     static ref USER_MESSAGE_HEADER_BG_COLOR: Color = Color::Green;
     static ref USER_MESSAGE_HEADER_FG_COLOR: Color = Color::Black;
@@ -309,13 +346,16 @@ lazy_static! {
     static ref OBSERVATION_TAG_COLOR: Color = Color::BrightGreen;
 }
 
-// const FIREWORKS_URL: &str = "https://api.fireworks.ai/v1/chat/completions";
-// const FIREWORKS_LLAMA_3_1_8B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-8b-instruct";
-// const FIREWORKS_LLAMA_3_1_70B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-70b-instruct";
+const FIREWORKS_URL: &str = "https://api.fireworks.ai/inference/v1/chat/completions";
+const FIREWORKS_LLAMA_3_1_8B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-8b-instruct";
+const FIREWORKS_LLAMA_3_1_70B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-70b-instruct";
 
 const TOGETHER_URL: &str = "https://api.together.xyz/v1/chat/completions";
 const TOGETHER_LLAMA_3_1_8B_MODEL: &str = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo";
 const TOGETHER_LLAMA_3_1_70B_MODEL: &str = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
+
+const GROQ_URL: &str = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_LLAMA_3_8B_MODEL: &str = "llama3-8b-8192";
 
 //--------------------------------------------------------------------------------------------------
 // Methods
