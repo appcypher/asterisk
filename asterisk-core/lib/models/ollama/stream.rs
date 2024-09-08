@@ -10,7 +10,7 @@ use reqwest_eventsource::{Error, Event, EventSource, RequestBuilderExt};
 
 use crate::models::{ModelResult, ResponseStreamError};
 
-use super::{OpenAIModel, ResponseChunkOk};
+use super::{OllamaModel, ResponseOk};
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -63,8 +63,8 @@ impl Stream for ResponseStream {
                         return Poll::Ready(None);
                     }
 
-                    let body: ResponseChunkOk = serde_json::from_str(&data)?;
-                    let content = OpenAIModel::extract_content_from_response_chunk(&body);
+                    let body: ResponseOk = serde_json::from_str(&data)?;
+                    let content = OllamaModel::extract_content_from_response_chunk(&body);
 
                     Poll::Ready(Some(Ok(content)))
                 }

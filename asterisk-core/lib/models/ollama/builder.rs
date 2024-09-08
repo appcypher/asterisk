@@ -1,8 +1,8 @@
-use std::{borrow::Cow, collections::HashMap, env};
+use std::{borrow::Cow, collections::HashMap};
 
 use super::{
-    Config, ModelType, OpenAILikeModel, OpenAIModel, ResponseFormat, ServiceTier, StreamOptions,
-    Tool, ToolChoice, OPENAI_API_KEY, OPENAI_API_URL,
+    Config, ModelType, OllamaModel, ResponseFormat, ServiceTier, StreamOptions, Tool, ToolChoice,
+    OLLAMA_API_URL,
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -10,10 +10,10 @@ use super::{
 //--------------------------------------------------------------------------------------------------
 
 /// A builder for an OpenAI model.
-pub struct ModelBuilder<U, M> {
-    model: M,
-    base_url: U,
-    api_key: Option<String>,
+#[derive(Debug, Clone, Default)]
+pub struct ModelBuilder {
+    model: Option<String>,
+    base_url: Option<String>,
     frequency_penalty: Option<f32>,
     logit_bias: Option<HashMap<u64, i8>>,
     logprobs: Option<u8>,
@@ -35,80 +35,22 @@ pub struct ModelBuilder<U, M> {
     user: Option<String>,
 }
 
-/// A builder for an OpenAI model.
-pub type OpenAIModelBuilder<M> = ModelBuilder<(), M>;
-
-/// A builder for an OpenAI-like model.
-pub type OpenAILikeModelBuilder<M> = ModelBuilder<String, M>;
-
 //--------------------------------------------------------------------------------------------------
 // Methods
 //--------------------------------------------------------------------------------------------------
 
-impl<U, M> ModelBuilder<U, M> {
+impl ModelBuilder {
     /// The ID of the model to use.
     ///
     /// Defaults to `ModelType::Gpt4oMini`.
-    pub fn model(self, model: impl Into<String>) -> ModelBuilder<U, String> {
-        ModelBuilder {
-            model: model.into(),
-            base_url: self.base_url,
-            api_key: self.api_key,
-            frequency_penalty: self.frequency_penalty,
-            logit_bias: self.logit_bias,
-            logprobs: self.logprobs,
-            top_logprobs: self.top_logprobs,
-            max_tokens: self.max_tokens,
-            n: self.n,
-            presence_penalty: self.presence_penalty,
-            response_format: self.response_format,
-            seed: self.seed,
-            service_tier: self.service_tier,
-            stop: self.stop,
-            stream: self.stream,
-            stream_options: self.stream_options,
-            temperature: self.temperature,
-            top_p: self.top_p,
-            tools: self.tools,
-            tool_choice: self.tool_choice,
-            parallel_tool_calls: self.parallel_tool_calls,
-            user: self.user,
-        }
+    pub fn model(mut self, model: impl Into<String>) -> ModelBuilder {
+        self.model = Some(model.into());
+        self
     }
 
     /// The base URL for making requests to the OpenAI-like API.
-    pub fn base_url(self, base_url: impl Into<String>) -> OpenAILikeModelBuilder<M> {
-        ModelBuilder {
-            base_url: base_url.into(),
-            model: self.model,
-            api_key: self.api_key,
-            frequency_penalty: self.frequency_penalty,
-            logit_bias: self.logit_bias,
-            logprobs: self.logprobs,
-            top_logprobs: self.top_logprobs,
-            max_tokens: self.max_tokens,
-            n: self.n,
-            presence_penalty: self.presence_penalty,
-            response_format: self.response_format,
-            seed: self.seed,
-            service_tier: self.service_tier,
-            stop: self.stop,
-            stream: self.stream,
-            stream_options: self.stream_options,
-            temperature: self.temperature,
-            top_p: self.top_p,
-            tools: self.tools,
-            tool_choice: self.tool_choice,
-            parallel_tool_calls: self.parallel_tool_calls,
-            user: self.user,
-        }
-    }
-
-    /// The API key for making requests to the OpenAI API.
-    ///
-    /// Defaults to the value of the `OPENAI_API_KEY` environment variable if set.
-    pub fn api_key(mut self, api_key: impl Into<String>) -> Self {
-        self.api_key = Some(api_key.into());
+    pub fn base_url(mut self, base_url: impl Into<String>) -> ModelBuilder {
+        self.base_url = Some(base_url.into());
         self
     }
 
@@ -188,6 +130,8 @@ impl<U, M> ModelBuilder<U, M> {
     }
 
     /// Whether to stream the response.
+    ///
+    /// Defaults to `true` if not specified.
     pub fn stream(mut self, stream: bool) -> Self {
         self.stream = Some(stream);
         self
@@ -243,12 +187,11 @@ impl<U, M> ModelBuilder<U, M> {
     }
 }
 
-impl OpenAIModelBuilder<()> {
+impl ModelBuilder {
     /// Builds the OpenAI model.
-    pub fn build(self) -> OpenAIModel {
+    pub fn build(self) -> OllamaModel {
         let config = Config {
-            model: ModelType::Gpt4oMini.to_string(),
-            api_key: self.api_key,
+            model: self.model.unwrap_or(ModelType::Llama3_1_8B.to_string()),
             frequency_penalty: self.frequency_penalty,
             logit_bias: self.logit_bias,
             logprobs: self.logprobs,
@@ -270,110 +213,13 @@ impl OpenAIModelBuilder<()> {
             user: self.user,
         };
 
-        OpenAIModel {
+        OllamaModel {
             config: Cow::Owned(config),
-            base_url: OPENAI_API_URL.to_string(),
+            base_url: self.base_url.unwrap_or(OLLAMA_API_URL.to_string()),
         }
-    }
-}
-
-impl OpenAIModelBuilder<String> {
-    /// Builds the OpenAI model.
-    pub fn build(self) -> OpenAIModel {
-        let config = Config {
-            model: self.model,
-            api_key: self.api_key,
-            frequency_penalty: self.frequency_penalty,
-            logit_bias: self.logit_bias,
-            logprobs: self.logprobs,
-            top_logprobs: self.top_logprobs,
-            max_tokens: self.max_tokens,
-            n: self.n,
-            presence_penalty: self.presence_penalty,
-            response_format: self.response_format,
-            seed: self.seed,
-            service_tier: self.service_tier,
-            stop: self.stop,
-            stream: self.stream,
-            stream_options: self.stream_options,
-            temperature: self.temperature,
-            top_p: self.top_p,
-            tools: self.tools,
-            tool_choice: self.tool_choice,
-            parallel_tool_calls: self.parallel_tool_calls,
-            user: self.user,
-        };
-
-        OpenAIModel {
-            config: Cow::Owned(config),
-            base_url: OPENAI_API_URL.to_string(),
-        }
-    }
-}
-
-impl OpenAILikeModelBuilder<String> {
-    /// Builds the OpenAI model.
-    pub fn build(self) -> OpenAILikeModel {
-        let config = Config {
-            model: self.model,
-            api_key: self.api_key,
-            frequency_penalty: self.frequency_penalty,
-            logit_bias: self.logit_bias,
-            logprobs: self.logprobs,
-            top_logprobs: self.top_logprobs,
-            max_tokens: self.max_tokens,
-            n: self.n,
-            presence_penalty: self.presence_penalty,
-            response_format: self.response_format,
-            seed: self.seed,
-            service_tier: self.service_tier,
-            stop: self.stop,
-            stream: self.stream,
-            stream_options: self.stream_options,
-            temperature: self.temperature,
-            top_p: self.top_p,
-            tools: self.tools,
-            tool_choice: self.tool_choice,
-            parallel_tool_calls: self.parallel_tool_calls,
-            user: self.user,
-        };
-
-        OpenAILikeModel(OpenAIModel {
-            config: Cow::Owned(config),
-            base_url: self.base_url,
-        })
     }
 }
 
 //--------------------------------------------------------------------------------------------------
 // Trait Implementations
 //--------------------------------------------------------------------------------------------------
-
-impl Default for ModelBuilder<(), ()> {
-    fn default() -> Self {
-        Self {
-            model: (),
-            base_url: (),
-            api_key: env::var(OPENAI_API_KEY).ok(),
-            frequency_penalty: None,
-            logit_bias: None,
-            logprobs: None,
-            top_logprobs: None,
-            max_tokens: None,
-            n: None,
-            presence_penalty: None,
-            response_format: None,
-            seed: None,
-            service_tier: None,
-            stop: None,
-            stream: None,
-            stream_options: None,
-            temperature: None,
-            top_p: None,
-            tools: None,
-            tool_choice: None,
-            parallel_tool_calls: None,
-            user: None,
-        }
-    }
-}

@@ -3,7 +3,7 @@ use std::{error::Error, fmt::Display};
 use reqwest::Response;
 use thiserror::Error;
 
-use super::openai;
+use super::{ollama, openai};
 
 //-------------------------------------------------------------------------------------------------
 // Types
@@ -23,13 +23,17 @@ pub enum ModelError {
     #[error("OpenAI error: {0}")]
     OpenAIResponseError(#[from] openai::ResponseError),
 
+    /// Error that occurs when the API returns an error from Ollama.
+    #[error("Ollama error: {0}")]
+    OllamaResponseError(#[from] ollama::ResponseError),
+
     /// Error that occurs when the API key is not found.
     #[error("No API key found")]
     NoAPIKeyFound,
 
     /// Error that occurs when the response stream from the API fails.
     #[error("Failed to parse response from API")]
-    OpenAIResponseStreamError(#[from] OpenAIResponseStreamError),
+    ResponseStreamError(#[from] ResponseStreamError),
 
     /// Error that occurs when parsing the response from the API fails.
     #[error("Failed to parse response from API")]
@@ -42,10 +46,10 @@ pub enum ModelError {
 
 /// Error type for the response stream from the OpenAI API.
 #[derive(Debug, Error)]
-pub enum OpenAIResponseStreamError {
+pub enum ResponseStreamError {
     /// Error related to the OpenAI API.
-    #[error("OpenAI response error")]
-    OpenAIResponse(Response),
+    #[error("API response error")]
+    APIResponse(Response),
 
     /// Other errors related to the SSE.
     #[error("EventSource error: {0}")]

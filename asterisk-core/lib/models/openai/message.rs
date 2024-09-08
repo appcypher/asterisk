@@ -3,6 +3,8 @@ use std::fmt::{self, Display};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+use crate::models::{AssistantMessage, Prompt, PromptMessage, SystemMessage, UserMessage};
+
 use super::{Config, ToolType};
 
 //--------------------------------------------------------------------------------------------------
@@ -384,5 +386,33 @@ impl ResponseBody {
 impl Display for ErrorInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.message)
+    }
+}
+
+impl From<Prompt> for RequestMessages {
+    fn from(prompt: Prompt) -> Self {
+        let request_messages = prompt
+            .into_iter()
+            .map(|m| match m {
+                PromptMessage::System(SystemMessage { content }) => RequestMessage::System {
+                    content,
+                    name: None,
+                },
+                PromptMessage::User(UserMessage { content }) => RequestMessage::User {
+                    content,
+                    name: None,
+                },
+                PromptMessage::Assistant(AssistantMessage { content }) => {
+                    RequestMessage::Assistant {
+                        content,
+                        name: None,
+                        refusal: None,
+                        tool_calls: None,
+                    }
+                }
+            })
+            .collect();
+
+        Self(request_messages)
     }
 }

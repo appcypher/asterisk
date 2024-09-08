@@ -77,6 +77,14 @@ An example of your follow-up action:
   [action]
   {"name":"response_channel","args":{"message":"The answer is 1.5"}}
 
+Do not combine thoughts and actions into a single `assistant:` response like this:
+
+  [thought]
+  I must get the message from the user...
+
+  [action]
+  {"name":"message_box","args":{}}
+
 # Tools
 
 You have access to the following tools:

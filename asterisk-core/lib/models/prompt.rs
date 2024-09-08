@@ -1,10 +1,8 @@
+use std::vec::IntoIter;
+
 //--------------------------------------------------------------------------------------------------
 // Types
 //--------------------------------------------------------------------------------------------------
-
-use std::vec::IntoIter;
-
-use super::openai::{RequestMessage, RequestMessages};
 
 /// A prompt is collection of messages that serves as input to the model.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -142,34 +140,6 @@ impl IntoIterator for Prompt {
 impl Default for Prompt {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl From<Prompt> for RequestMessages {
-    fn from(prompt: Prompt) -> Self {
-        let request_messages = prompt
-            .into_iter()
-            .map(|m| match m {
-                PromptMessage::System(SystemMessage { content }) => RequestMessage::System {
-                    content,
-                    name: None,
-                },
-                PromptMessage::User(UserMessage { content }) => RequestMessage::User {
-                    content,
-                    name: None,
-                },
-                PromptMessage::Assistant(AssistantMessage { content }) => {
-                    RequestMessage::Assistant {
-                        content,
-                        name: None,
-                        refusal: None,
-                        tool_calls: None,
-                    }
-                }
-            })
-            .collect();
-
-        Self(request_messages)
     }
 }
 

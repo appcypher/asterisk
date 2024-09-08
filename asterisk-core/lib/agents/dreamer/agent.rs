@@ -143,6 +143,10 @@ impl<M> Dreamer<M> {
         response: String,
         metrics_tx: &mpsc::UnboundedSender<Metrics>,
     ) -> DreamerResult<()> {
+        if response.is_empty() {
+            return Ok(());
+        }
+
         // Parse the response into a ThreadMessage.
         let message: ThreadMessage = response.parse()?;
 

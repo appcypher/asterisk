@@ -2,7 +2,8 @@ use std::{env, io::Write};
 
 use asterisk_core::{
     models::{
-        openai::{ModelType, OpenAILikeModel, OpenAIModel},
+        ollama::{self, OllamaModel},
+        openai::{self, OpenAILikeModel, OpenAIModel},
         ModelError, ModelResult, Prompt, PromptMessage, TextStreamModel,
     },
     utils::{self, Env},
@@ -30,6 +31,7 @@ const GROQ_LLAMA_3_8B_MODEL: &str = "llama3-8b-8192";
 enum Model {
     OpenAIModel(OpenAIModel),
     OpenAILikeModel(OpenAILikeModel),
+    OllamaModel(OllamaModel),
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -53,6 +55,7 @@ async fn main() -> ModelResult<()> {
         " 4.".bold().black().on_white()
     );
     println!("{} llama-3-8b (groq)", " 5.".bold().black().on_white());
+    println!("{} llama-3-1-8b (ollama)", " 6.".bold().black().on_white());
     print!(">>> ");
     std::io::stdout().flush().unwrap();
 
@@ -62,13 +65,13 @@ async fn main() -> ModelResult<()> {
     let model: Model = match input.trim() {
         "1" => Model::OpenAIModel(
             OpenAIModel::builder()
-                .model(ModelType::Gpt4o_2024_08_06)
+                .model(openai::ModelType::Gpt4o_2024_08_06)
                 .temperature(0.)
                 .build(),
         ),
         "" | "2" => Model::OpenAIModel(
             OpenAIModel::builder()
-                .model(ModelType::Gpt4oMini_2024_07_18)
+                .model(openai::ModelType::Gpt4oMini_2024_07_18)
                 .temperature(0.)
                 .build(),
         ),
@@ -96,6 +99,12 @@ async fn main() -> ModelResult<()> {
                 .temperature(0.)
                 .build(),
         ),
+        "6" => Model::OllamaModel(
+            OllamaModel::builder()
+                .model(ollama::ModelType::Llama3_1_8B)
+                .temperature(0.)
+                .build(),
+        ),
         _ => return Err(ModelError::custom(anyhow::anyhow!("invalid model"))),
     };
 
@@ -118,6 +127,7 @@ async fn main() -> ModelResult<()> {
         let mut output = match &model {
             Model::OpenAIModel(model) => model.prompt_stream(prompt.clone()).await?,
             Model::OpenAILikeModel(model) => model.prompt_stream(prompt.clone()).await?,
+            Model::OllamaModel(model) => model.prompt_stream(prompt.clone()).await?,
         };
 
         println!("\n{}", " assistant: ".bold().black().on_bright_cyan());
@@ -143,6 +153,7 @@ impl Model {
         match self {
             Model::OpenAIModel(model) => model.get_config().model.to_string(),
             Model::OpenAILikeModel(model) => model.get_config().model.to_string(),
+            Model::OllamaModel(model) => model.get_config().model.to_string(),
         }
     }
 }

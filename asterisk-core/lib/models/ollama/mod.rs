@@ -1,16 +1,17 @@
-//! Models
+//! Module for working with OpenAI models.
 
-mod error;
-mod prompt;
-mod traits;
+mod builder;
+mod config;
+mod message;
+mod model;
+mod stream;
 
 //--------------------------------------------------------------------------------------------------
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-pub mod ollama;
-pub mod openai;
-
-pub use error::*;
-pub use prompt::*;
-pub use traits::*;
+pub use builder::*;
+pub use config::*;
+pub use message::*;
+pub use model::*;
+pub use stream::*;

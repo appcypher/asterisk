@@ -3,6 +3,7 @@ use std::{env, io::Write, process};
 use asterisk_core::{
     agents::dreamer::{channels, ActionMessage, Dreamer, Metrics, ThreadMessage},
     models::{
+        ollama::OllamaModel,
         openai::{ModelType, OpenAILikeModel, OpenAIModel},
         ModelResult, Prompt, TextModel,
     },
@@ -26,10 +27,11 @@ use crate::{CliError, CliResult};
 // Types
 //--------------------------------------------------------------------------------------------------
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Model {
     OpenAIModel(OpenAIModel),
     OpenAILikeModel(OpenAILikeModel),
+    OllamaModel(OllamaModel),
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -242,6 +244,7 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
         " 6.".bold().black().on_white()
     );
     println!("{} llama-3-8b (groq)", " 7.".bold().black().on_white());
+    println!("{} llama-3-1-8b (ollama)", " 8.".bold().black().on_white());
     print!(">>> ");
     std::io::stdout().flush().unwrap();
 
@@ -256,7 +259,7 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
                 .temperature(0.)
                 .build(),
         ),
-        "" | "2" => Model::OpenAIModel(
+        "2" => Model::OpenAIModel(
             OpenAIModel::builder()
                 .seed(0)
                 .model(ModelType::Gpt4oMini_2024_07_18)
@@ -281,7 +284,7 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
                 .temperature(0.)
                 .build(),
         ),
-        "5" => Model::OpenAILikeModel(
+        "" | "5" => Model::OpenAILikeModel(
             OpenAILikeModel::builder()
                 .api_key(env::var("FIREWORKS_API_KEY").unwrap())
                 .base_url(FIREWORKS_URL)
@@ -306,24 +309,14 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
                 .temperature(0.)
                 .build(),
         ),
+        "8" => Model::OllamaModel(OllamaModel::builder().temperature(0.).stream(false).build()),
         _ => return Err(CliError::InvalidModel(input.trim().to_string())),
     };
 
-    // println!(
-    //     "\n{}{}",
-    //     (String::from(" ") + &model.get_model())
-    //         .bold()
-    //         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
-    //         .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR),
-    //     " selected "
-    //         .bold()
-    //         .color(*SYSTEM_MESSAGE_HEADER_FG_COLOR)
-    //         .on_color(*SYSTEM_MESSAGE_HEADER_BG_COLOR)
-    // );
     println!(
-        "\n{}{}",
+        "\n{} {}",
         model.get_model().italic().dimmed(),
-        " selected ".italic().dimmed()
+        "selected ".italic().dimmed()
     );
 
     let agent = Dreamer::builder().model(model).build();
@@ -366,6 +359,7 @@ impl Model {
         match self {
             Model::OpenAIModel(model) => model.get_config().model.clone(),
             Model::OpenAILikeModel(model) => model.get_config().model.clone(),
+            Model::OllamaModel(model) => model.get_config().model.clone(),
         }
     }
 }
@@ -379,6 +373,7 @@ impl TextModel for Model {
         match self {
             Model::OpenAIModel(model) => model.prompt(prompt).await,
             Model::OpenAILikeModel(model) => model.prompt(prompt).await,
+            Model::OllamaModel(model) => model.prompt(prompt).await,
         }
     }
 }
