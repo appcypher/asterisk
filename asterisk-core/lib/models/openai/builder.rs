@@ -24,7 +24,7 @@ pub struct ModelBuilder<U, M> {
     response_format: Option<ResponseFormat>,
     seed: Option<u64>,
     service_tier: Option<ServiceTier>,
-    stop: Option<String>,
+    stop: Option<Vec<String>>,
     stream: Option<bool>,
     stream_options: Option<StreamOptions>,
     temperature: Option<f32>,
@@ -182,8 +182,8 @@ impl<U, M> ModelBuilder<U, M> {
     }
 
     /// Up to 4 sequences where the API will stop generating further tokens.
-    pub fn stop(mut self, stop: String) -> Self {
-        self.stop = Some(stop);
+    pub fn stop(mut self, stop: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.stop = Some(stop.into_iter().map(|s| s.into()).collect());
         self
     }
 

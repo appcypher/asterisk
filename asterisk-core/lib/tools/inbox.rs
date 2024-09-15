@@ -10,7 +10,7 @@ use super::{Tool, ToolError, ToolResult};
 
 /// The tool for scanning the user message.
 #[derive(Default)]
-pub struct MessageBox {
+pub struct Inbox {
     message: Option<String>,
 }
 
@@ -18,7 +18,7 @@ pub struct MessageBox {
 // Methods
 //--------------------------------------------------------------------------------------------------
 
-impl MessageBox {
+impl Inbox {
     /// Updates the message.
     pub fn update_message(&mut self, message: String) {
         self.message = Some(message);
@@ -29,7 +29,7 @@ impl MessageBox {
 // Trait Implementations
 //--------------------------------------------------------------------------------------------------
 
-impl Tool for MessageBox {
+impl Tool for Inbox {
     fn name(&self) -> String {
         "message_box".to_string()
     }

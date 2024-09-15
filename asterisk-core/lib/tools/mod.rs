@@ -8,7 +8,8 @@ mod traits;
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-pub mod message_box;
+pub mod inbox;
+pub mod memories;
 
 pub use error::*;
 pub use helper::*;

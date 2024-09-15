@@ -7,12 +7,12 @@ use tokio::{sync::mpsc, task::JoinHandle};
 
 use crate::{
     models::{openai::OpenAIModel, TextModel},
-    tools::{self, message_box::MessageBox, Tool},
+    tools::{self, inbox::Inbox, Tool},
 };
 
 use super::{
-    ActionMessage, AgentSideChannels, DreamerBuilder, DreamerError, DreamerResult, Memories,
-    Metrics, ThoughtMessage, Thread, ThreadMessage,
+    ActionMessage, AgentSideChannels, DreamerBuilder, DreamerError, DreamerResult, Metrics,
+    ThoughtMessage, Thread, ThreadMessage,
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -65,14 +65,11 @@ pub struct Dreamer<M = OpenAIModel> {
     /// The model used to generate responses.
     pub(crate) model: M,
 
-    /// The memories of the assistant.
-    pub(crate) memories: Memories,
-
     /// The thread of conversation.
     pub(crate) thread: Thread,
 
     /// The tool for reading the user message.
-    pub(crate) message_box: MessageBox,
+    pub(crate) inbox: Inbox,
 
     /// The provided tools the assistant has access to.
     pub(crate) provided_tools: HashMap<String, Box<dyn Tool + Send + Sync>>,
@@ -94,12 +91,11 @@ impl Dreamer {
 
 impl<M> Dreamer<M> {
     /// Creates a new `Dreamer` with specified model.
-    pub fn new(model: M) -> Self {
+    pub fn new(model: M, system_instruction: String) -> Self {
         Self {
             model,
-            memories: Memories::new(),
-            thread: Thread::new(DREAMER_SYSTEM_INSTRUCTION),
-            message_box: MessageBox::default(),
+            thread: Thread::new(system_instruction),
+            inbox: Inbox::default(),
             provided_tools: HashMap::new(),
             idle: true,
         }
@@ -170,7 +166,7 @@ impl<M> Dreamer<M> {
         metrics_tx: &mpsc::UnboundedSender<Metrics>,
     ) -> DreamerResult<()> {
         // Update the message box.
-        self.message_box.update_message(message);
+        self.inbox.update_message(message);
 
         // Extend the thread with the message.
         let message = ThreadMessage::notification(NOTIFICATION_USER_MESSAGE);
@@ -224,23 +220,28 @@ impl<M> Dreamer<M> {
 
         let (name, _args) = tools::parse_tool(action.get_main_content())?;
 
-        if name == "message_box" {
-            // Execute the tool and get the observation.
-            let observation = self.message_box.execute(Map::new())?;
+        match name.as_str() {
+            "inbox" => {
+                // Execute the tool and get the observation.
+                let observation = self.inbox.execute(Map::new())?;
 
-            // Create the observation message.
-            let message = ThreadMessage::observation(observation);
+                // Create the observation message.
+                let message = ThreadMessage::observation(observation);
 
-            // Send metrics to the metrics channel.
-            metrics_tx.send(Metrics::ThreadMessage(message.clone()))?;
+                // Send metrics to the metrics channel.
+                metrics_tx.send(Metrics::ThreadMessage(message.clone()))?;
 
-            // Add observation to the thread.
-            self.thread.push_message(message);
+                // Add observation to the thread.
+                self.thread.push_message(message);
 
-            // Make the agent busy.
-            self.make_busy();
+                // Make the agent busy.
+                self.make_busy();
 
-            return Ok(());
+                return Ok(());
+            }
+            "memories" => {}
+            "outbox" => {}
+            _ => {}
         }
 
         self.make_idle();

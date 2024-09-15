@@ -76,7 +76,7 @@ pub struct Config {
 
     /// Up to 4 sequences where the API will stop generating further tokens.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub stop: Option<String>,
+    pub stop: Option<Vec<String>>,
 
     /// Whether to response should be sent as data-only server-sent events as they become available.
     #[serde(skip_serializing_if = "Option::is_none")]

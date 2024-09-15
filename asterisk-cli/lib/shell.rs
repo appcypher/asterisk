@@ -3,7 +3,6 @@ use std::{env, io::Write, process};
 use asterisk_core::{
     agents::dreamer::{channels, ActionMessage, Dreamer, Metrics, ThreadMessage},
     models::{
-        ollama::OllamaModel,
         openai::{ModelType, OpenAILikeModel, OpenAIModel},
         ModelResult, Prompt, TextModel,
     },
@@ -31,7 +30,6 @@ use crate::{CliError, CliResult};
 pub enum Model {
     OpenAIModel(OpenAIModel),
     OpenAILikeModel(OpenAILikeModel),
-    OllamaModel(OllamaModel),
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -228,23 +226,21 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
     println!("{} gpt-4o", " 1.".bold().black().on_white());
     println!("{} gpt-4o-mini", " 2.".bold().black().on_white());
     println!(
-        "{} llama-3-1-8b (together)",
+        "{} llama-3-1-8b (fireworks)",
         " 3.".bold().black().on_white()
     );
     println!(
-        "{} llama-3-1-70b (together)",
+        "{} llama-3-1-70b (fireworks)",
         " 4.".bold().black().on_white()
     );
     println!(
-        "{} llama-3-1-8b (fireworks)",
+        "{} llama-3-1-8b (sambanova)",
         " 5.".bold().black().on_white()
     );
     println!(
-        "{} llama-3-1-70b (fireworks)",
+        "{} llama-3-1-70b (sambanova)",
         " 6.".bold().black().on_white()
     );
-    println!("{} llama-3-8b (groq)", " 7.".bold().black().on_white());
-    println!("{} llama-3-1-8b (ollama)", " 8.".bold().black().on_white());
     print!(">>> ");
     std::io::stdout().flush().unwrap();
 
@@ -254,62 +250,56 @@ fn select_agent() -> CliResult<Dreamer<Model>> {
     let model: Model = match input.trim() {
         "1" => Model::OpenAIModel(
             OpenAIModel::builder()
-                .seed(0)
                 .model(ModelType::Gpt4o_2024_08_06)
+                .stop(["<contd>"])
                 .temperature(0.)
+                .seed(0)
                 .build(),
         ),
         "2" => Model::OpenAIModel(
             OpenAIModel::builder()
-                .seed(0)
                 .model(ModelType::Gpt4oMini_2024_07_18)
+                .stop(["<contd>"])
                 .temperature(0.)
+                .seed(0)
                 .build(),
         ),
-        "3" => Model::OpenAILikeModel(
+        "" | "3" => Model::OpenAILikeModel(
             OpenAILikeModel::builder()
-                .api_key(env::var("TOGETHER_API_KEY").unwrap())
-                .base_url(TOGETHER_URL)
-                .seed(0)
-                .model(TOGETHER_LLAMA_3_1_8B_MODEL)
+                .api_key(env::var("FIREWORKS_API_KEY").unwrap())
+                .base_url(FIREWORKS_URL)
+                .model(FIREWORKS_LLAMA_3_1_8B_MODEL)
+                .stop(["<contd>"])
                 .temperature(0.)
                 .build(),
         ),
         "4" => Model::OpenAILikeModel(
             OpenAILikeModel::builder()
-                .api_key(env::var("TOGETHER_API_KEY").unwrap())
-                .base_url(TOGETHER_URL)
-                .seed(0)
-                .model(TOGETHER_LLAMA_3_1_70B_MODEL)
+                .api_key(env::var("FIREWORKS_API_KEY").unwrap())
+                .base_url(FIREWORKS_URL)
+                .model(FIREWORKS_LLAMA_3_1_70B_MODEL)
+                .stop(["<contd>"])
                 .temperature(0.)
                 .build(),
         ),
-        "" | "5" => Model::OpenAILikeModel(
+        "5" => Model::OpenAILikeModel(
             OpenAILikeModel::builder()
-                .api_key(env::var("FIREWORKS_API_KEY").unwrap())
-                .base_url(FIREWORKS_URL)
-                .model(FIREWORKS_LLAMA_3_1_8B_MODEL)
+                .api_key(env::var("SAMBA_NOVA_API_KEY").unwrap())
+                .base_url(SAMBA_NOVA_URL)
+                .model(SAMBA_NOVA_LLAMA_3_1_8B_MODEL)
+                .stop(["<contd>"])
                 .temperature(0.)
                 .build(),
         ),
         "6" => Model::OpenAILikeModel(
             OpenAILikeModel::builder()
-                .api_key(env::var("FIREWORKS_API_KEY").unwrap())
-                .base_url(FIREWORKS_URL)
-                .model(FIREWORKS_LLAMA_3_1_70B_MODEL)
+                .api_key(env::var("SAMBA_NOVA_API_KEY").unwrap())
+                .base_url(SAMBA_NOVA_URL)
+                .model(SAMBA_NOVA_LLAMA_3_1_70B_MODEL)
+                .stop(["<contd>"])
                 .temperature(0.)
                 .build(),
         ),
-        "7" => Model::OpenAILikeModel(
-            OpenAILikeModel::builder()
-                .api_key(env::var("GROQ_API_KEY").unwrap())
-                .base_url(GROQ_URL)
-                .seed(0)
-                .model(GROQ_LLAMA_3_8B_MODEL)
-                .temperature(0.)
-                .build(),
-        ),
-        "8" => Model::OllamaModel(OllamaModel::builder().temperature(0.).stream(false).build()),
         _ => return Err(CliError::InvalidModel(input.trim().to_string())),
     };
 
@@ -343,12 +333,9 @@ const FIREWORKS_URL: &str = "https://api.fireworks.ai/inference/v1/chat/completi
 const FIREWORKS_LLAMA_3_1_8B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-8b-instruct";
 const FIREWORKS_LLAMA_3_1_70B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-70b-instruct";
 
-const TOGETHER_URL: &str = "https://api.together.xyz/v1/chat/completions";
-const TOGETHER_LLAMA_3_1_8B_MODEL: &str = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo";
-const TOGETHER_LLAMA_3_1_70B_MODEL: &str = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo";
-
-const GROQ_URL: &str = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_LLAMA_3_8B_MODEL: &str = "llama3-8b-8192";
+const SAMBA_NOVA_URL: &str = "https://api.sambanova.ai/v1/chat/completions";
+const SAMBA_NOVA_LLAMA_3_1_8B_MODEL: &str = "Meta-Llama-3.1-8B-Instruct";
+const SAMBA_NOVA_LLAMA_3_1_70B_MODEL: &str = "Meta-Llama-3.1-70B-Instruct";
 
 //--------------------------------------------------------------------------------------------------
 // Methods
@@ -359,7 +346,6 @@ impl Model {
         match self {
             Model::OpenAIModel(model) => model.get_config().model.clone(),
             Model::OpenAILikeModel(model) => model.get_config().model.clone(),
-            Model::OllamaModel(model) => model.get_config().model.clone(),
         }
     }
 }
@@ -373,7 +359,6 @@ impl TextModel for Model {
         match self {
             Model::OpenAIModel(model) => model.prompt(prompt).await,
             Model::OpenAILikeModel(model) => model.prompt(prompt).await,
-            Model::OllamaModel(model) => model.prompt(prompt).await,
         }
     }
 }

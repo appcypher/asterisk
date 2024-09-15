@@ -4,7 +4,6 @@ mod agent;
 mod builder;
 mod context;
 mod error;
-mod memories;
 mod metrics;
 mod thread;
 
@@ -19,6 +18,5 @@ pub use builder::*;
 pub use channels::*;
 pub use context::*;
 pub use error::*;
-pub use memories::*;
 pub use metrics::*;
 pub use thread::*;

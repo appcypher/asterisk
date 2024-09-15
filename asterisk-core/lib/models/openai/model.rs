@@ -42,17 +42,25 @@ impl OpenAIModel {
     /// Calls the API with the given request messages.
     pub async fn call(&self, messages: impl Into<RequestMessages>) -> ModelResult<ResponseOk> {
         let config = self.get_config_without_streaming();
+        debug!("config = {config:#?}");
+
+        let messages = messages.into();
+        debug!("messages = {}", serde_json::to_string(&messages).unwrap());
+
         let request = reqwest::Client::new()
             .post(&self.base_url)
+            .timeout(std::time::Duration::from_secs(60))
             .bearer_auth(config.api_key.as_ref().ok_or(ModelError::NoAPIKeyFound)?)
             .json(&RequestBody {
-                messages: messages.into(),
+                messages,
                 config: config.into_owned(),
             });
 
         let response = request.send().await?;
+
         let body = response.text().await?;
         debug!("body = {body:#?}");
+
         let body: ResponseBody = serde_json::from_str(&body)?;
         let ResponseBody::Ok(body) = body else {
             return Err(ModelError::OpenAIResponseError(body.unwrap_err()));
@@ -68,11 +76,15 @@ impl OpenAIModel {
     ) -> ModelResult<ResponseStream> {
         let config = self.get_config_with_streaming(None);
         debug!("config = {config:#?}");
+
+        let messages = messages.into();
+        debug!("messages = {}", serde_json::to_string(&messages).unwrap());
+
         let request = reqwest::Client::new()
             .post(&self.base_url)
             .bearer_auth(config.api_key.as_ref().ok_or(ModelError::NoAPIKeyFound)?)
             .json(&RequestBody {
-                messages: messages.into(),
+                messages,
                 config: config.into_owned(),
             });
 

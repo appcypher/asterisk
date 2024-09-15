@@ -1,8 +1,10 @@
-use std::{env, io::Write};
+use std::{
+    env,
+    io::{BufRead, BufReader, Write},
+};
 
 use asterisk_core::{
     models::{
-        ollama::{self, OllamaModel},
         openai::{self, OpenAILikeModel, OpenAIModel},
         ModelError, ModelResult, Prompt, PromptMessage, TextStreamModel,
     },
@@ -10,26 +12,15 @@ use asterisk_core::{
 };
 use colored::Colorize;
 use futures::{stream::BoxStream, StreamExt};
+use regex::RegexBuilder;
 
 //--------------------------------------------------------------------------------------------------
 // Constants
 //--------------------------------------------------------------------------------------------------
 
-const TOGETHER_URL: &str = "https://api.together.xyz/v1/chat/completions";
-const TOGETHER_LLAMA_3_1_8B_MODEL: &str = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo";
-
 const FIREWORKS_URL: &str = "https://api.fireworks.ai/inference/v1/chat/completions";
 const FIREWORKS_LLAMA_3_1_8B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-8b-instruct";
 const FIREWORKS_LLAMA_3_1_70B_MODEL: &str = "accounts/fireworks/models/llama-v3p1-70b-instruct";
-
-const GROQ_URL: &str = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_LLAMA_3_8B_MODEL: &str = "llama3-8b-8192";
-
-const SAMBA_NOVA_URL: &str = "https://api.sambanova.ai/v1/chat/completions";
-const SAMBA_NOVA_LLAMA_3_1_8B_MODEL: &str = "Meta-Llama-3.1-8B-Instruct";
-
-const CEREBRAS_URL: &str = "https://api.cerebras.ai/v1/chat/completions";
-const CEREBRAS_LLAMA_3_1_8B_MODEL: &str = "llama3.1-8b";
 
 //-------------------------------------------------------------------------------------------------
 // Types
@@ -38,7 +29,6 @@ const CEREBRAS_LLAMA_3_1_8B_MODEL: &str = "llama3.1-8b";
 enum Model {
     OpenAIModel(OpenAIModel),
     OpenAILikeModel(OpenAILikeModel),
-    OllamaModel(OllamaModel),
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -58,29 +48,11 @@ async fn main() -> ModelResult<()> {
         " 3.".bold().black().on_white()
     );
     println!(
-        "{} llama-3-1-8b (sambanova)",
-        " 4.".bold().black().on_white()
-    );
-    println!(
-        "{} llama-3-1-8b (cerebras)",
-        " 5.".bold().black().on_white()
-    );
-    println!(
-        "{} llama-3-1-8b (together)",
-        " 6.".bold().black().on_white()
-    );
-    println!("{} llama-3-8b (groq)", " 7.".bold().black().on_white());
-    println!("{} llama-3-1-8b (ollama)", " 8.".bold().black().on_white());
-    println!(
         "{} llama-3-1-70b (fireworks)",
-        " 9.".bold().black().on_white()
+        " 4.".bold().black().on_white()
     );
     print!(">>> ");
     std::io::stdout().flush().unwrap();
-
-    // Check if there is a --no-history flag
-    let args: Vec<String> = env::args().collect();
-    let no_history = args.iter().any(|arg| arg == "--no-history");
 
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
@@ -92,13 +64,13 @@ async fn main() -> ModelResult<()> {
                 .temperature(0.)
                 .build(),
         ),
-        "" | "2" => Model::OpenAIModel(
+        "2" => Model::OpenAIModel(
             OpenAIModel::builder()
                 .model(openai::ModelType::Gpt4oMini_2024_07_18)
                 .temperature(0.)
                 .build(),
         ),
-        "3" => Model::OpenAILikeModel(
+        "" | "3" => Model::OpenAILikeModel(
             OpenAILikeModel::builder()
                 .api_key(env::var("FIREWORKS_API_KEY").unwrap())
                 .base_url(FIREWORKS_URL)
@@ -107,44 +79,6 @@ async fn main() -> ModelResult<()> {
                 .build(),
         ),
         "4" => Model::OpenAILikeModel(
-            OpenAILikeModel::builder()
-                .api_key(env::var("SAMBA_NOVA_API_KEY").unwrap())
-                .base_url(SAMBA_NOVA_URL)
-                .model(SAMBA_NOVA_LLAMA_3_1_8B_MODEL)
-                .temperature(0.)
-                .build(),
-        ),
-        "5" => Model::OpenAILikeModel(
-            OpenAILikeModel::builder()
-                .api_key(env::var("CEREBRAS_API_KEY").unwrap())
-                .base_url(CEREBRAS_URL)
-                .model(CEREBRAS_LLAMA_3_1_8B_MODEL)
-                .temperature(0.)
-                .build(),
-        ),
-        "6" => Model::OpenAILikeModel(
-            OpenAILikeModel::builder()
-                .api_key(env::var("TOGETHER_API_KEY").unwrap())
-                .base_url(TOGETHER_URL)
-                .model(TOGETHER_LLAMA_3_1_8B_MODEL)
-                .temperature(0.)
-                .build(),
-        ),
-        "7" => Model::OpenAILikeModel(
-            OpenAILikeModel::builder()
-                .api_key(env::var("GROQ_API_KEY").unwrap())
-                .base_url(GROQ_URL)
-                .model(GROQ_LLAMA_3_8B_MODEL)
-                .temperature(0.)
-                .build(),
-        ),
-        "8" => Model::OllamaModel(
-            OllamaModel::builder()
-                .model(ollama::ModelType::Llama3_1_8B)
-                .temperature(0.)
-                .build(),
-        ),
-        "9" => Model::OpenAILikeModel(
             OpenAILikeModel::builder()
                 .api_key(env::var("FIREWORKS_API_KEY").unwrap())
                 .base_url(FIREWORKS_URL)
@@ -161,17 +95,30 @@ async fn main() -> ModelResult<()> {
         " selected".italic().dimmed()
     );
 
-    let mut prompt = Prompt::new();
-    prompt.add_message(PromptMessage::system("You are a helpful assistant."));
-
     loop {
-        println!("\n{}", " user: ".bold().black().on_bright_green());
+        println!("\n{}", " messages: ".bold().black().on_bright_green());
 
         let mut input = String::new();
-        std::io::stdin().read_line(&mut input).unwrap();
 
-        prompt.push(PromptMessage::user(input.clone()));
-        let mut output = model.prompt_stream(prompt.clone()).await?;
+        let stdin = std::io::stdin();
+        let mut reader = BufReader::new(stdin).lines();
+
+        let mut count = 0;
+        while let Some(line) = reader.next() {
+            let line = line.unwrap();
+            if line.is_empty() {
+                if count < 1 {
+                    count += 1;
+                    continue;
+                }
+                break;
+            }
+            input.push_str(&line);
+            input.push('\n');
+        }
+
+        let prompt = parse_prompt(&input);
+        let mut output = model.prompt_stream(prompt).await?;
 
         println!("\n{}", " assistant: ".bold().black().on_bright_cyan());
 
@@ -182,13 +129,54 @@ async fn main() -> ModelResult<()> {
             std::io::stdout().write_all(&chunk.as_bytes()).unwrap();
         }
         println!();
+    }
+}
 
-        if no_history {
-            prompt.pop();
+//-------------------------------------------------------------------------------------------------
+// Functions
+//-------------------------------------------------------------------------------------------------
+
+fn parse_prompt(mut prompt: &str) -> Prompt {
+    let mut prompt_builder = Prompt::new();
+
+    // Match the first system message
+    let system_pattern = RegexBuilder::new(r"^\s*system:\s*((.+?\n*)+?)(user:|assistant:|$)")
+        .dot_matches_new_line(true)
+        .build()
+        .unwrap();
+
+    let system_pattern = system_pattern.captures(prompt);
+    if let Some(Some(system_match)) = system_pattern.map(|m| m.get(1)) {
+        prompt_builder.push(PromptMessage::system(system_match.as_str().trim()));
+        prompt = &prompt[system_match.end()..];
+    }
+
+    // Match all user and assistant messages
+    let user_pattern = RegexBuilder::new(r"^user:\s*((.+?\n*)+?)(assistant:|user:|$)")
+        .dot_matches_new_line(true)
+        .build()
+        .unwrap();
+
+    let assistant_pattern = RegexBuilder::new(r"^assistant:\s*((.+?\n*)+?)(user:|assistant:|$)")
+        .dot_matches_new_line(true)
+        .build()
+        .unwrap();
+
+    loop {
+        if let Some(Some(user_match)) = user_pattern.captures(prompt).map(|m| m.get(1)) {
+            prompt_builder.push(PromptMessage::user(user_match.as_str().trim()));
+            prompt = &prompt[user_match.end()..];
+        } else if let Some(Some(assistant_match)) =
+            assistant_pattern.captures(prompt).map(|m| m.get(1))
+        {
+            prompt_builder.push(PromptMessage::assistant(assistant_match.as_str().trim()));
+            prompt = &prompt[assistant_match.end()..];
         } else {
-            prompt.push(PromptMessage::assistant(response));
+            break;
         }
     }
+
+    prompt_builder
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -200,7 +188,6 @@ impl Model {
         match self {
             Model::OpenAIModel(model) => model.get_config().model.to_string(),
             Model::OpenAILikeModel(model) => model.get_config().model.to_string(),
-            Model::OllamaModel(model) => model.get_config().model.to_string(),
         }
     }
 }
@@ -217,7 +204,60 @@ impl TextStreamModel for Model {
         match self {
             Model::OpenAIModel(model) => model.prompt_stream(prompt).await,
             Model::OpenAILikeModel(model) => model.prompt_stream(prompt).await,
-            Model::OllamaModel(model) => model.prompt_stream(prompt).await,
         }
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+// Tests
+//-------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_prompt() {
+        let prompt = "\nsystem: \nYou are a helpful assistant.\n\nuser:\nHello, how are you?\n\nassistant: \nI am fine, thank you!";
+        let mut expected = Prompt::new();
+        expected.push(PromptMessage::system("You are a helpful assistant."));
+        expected.push(PromptMessage::user("Hello, how are you?"));
+        expected.push(PromptMessage::assistant("I am fine, thank you!"));
+
+        let parsed = parse_prompt(prompt);
+
+        assert_eq!(expected, parsed);
+
+        let prompt = r#"
+system:
+Always break a user's sentence into independent ideas and conjuctions using predicate logic.
+List them out as bulletpoints without any other information
+
+user:
+Alice has N brothers and she also has M sisters.
+
+assistant:
+- Alice has N brothers
+- and
+- she also has M sisters
+
+user:
+How many sisters does Alice’s brother have?"#;
+
+        let mut expected = Prompt::new();
+        expected.push(PromptMessage::system("Always break a user's sentence into independent ideas and conjuctions using predicate logic.\nList them out as bulletpoints without any other information"));
+        expected.push(PromptMessage::user(
+            "Alice has N brothers and she also has M sisters.",
+        ));
+        expected.push(PromptMessage::assistant(
+            "- Alice has N brothers\n- and\n- she also has M sisters",
+        ));
+        expected.push(PromptMessage::user(
+            "How many sisters does Alice’s brother have?",
+        ));
+
+        let parsed = parse_prompt(prompt);
+
+        assert_eq!(expected, parsed);
     }
 }

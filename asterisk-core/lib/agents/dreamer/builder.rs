@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use crate::{
     models::TextModel,
-    tools::{message_box::MessageBox, Tool},
+    tools::{inbox::Inbox, Tool},
 };
 
-use super::{Dreamer, Memories, Thread, DREAMER_SYSTEM_INSTRUCTION};
+use super::{Dreamer, Thread, DREAMER_SYSTEM_INSTRUCTION};
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -18,6 +18,9 @@ pub struct DreamerBuilder<M> {
 
     /// The model for the dreamer.
     model: M,
+
+    /// The system instruction for the dreamer.
+    system_instruction: Option<String>,
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -39,8 +42,17 @@ impl<M> DreamerBuilder<M> {
     /// Sets the model for the dreamer.
     pub fn model<N: TextModel>(self, model: N) -> DreamerBuilder<N> {
         DreamerBuilder {
-            tools: self.tools,
             model,
+            tools: self.tools,
+            system_instruction: self.system_instruction,
+        }
+    }
+
+    /// Sets the system instruction for the dreamer.
+    pub fn system_instruction(self, system_instruction: String) -> Self {
+        DreamerBuilder {
+            system_instruction: Some(system_instruction),
+            ..self
         }
     }
 }
@@ -51,9 +63,11 @@ impl<M: TextModel> DreamerBuilder<M> {
         Dreamer {
             provided_tools: self.tools,
             model: self.model,
-            memories: Memories::new(),
-            thread: Thread::new(DREAMER_SYSTEM_INSTRUCTION),
-            message_box: MessageBox::default(),
+            thread: Thread::new(
+                self.system_instruction
+                    .unwrap_or(DREAMER_SYSTEM_INSTRUCTION.to_string()),
+            ),
+            inbox: Inbox::default(),
             idle: true,
         }
     }
@@ -68,6 +82,7 @@ impl Default for DreamerBuilder<()> {
         DreamerBuilder {
             tools: HashMap::new(),
             model: (),
+            system_instruction: None,
         }
     }
 }

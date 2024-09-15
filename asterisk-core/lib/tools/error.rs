@@ -20,6 +20,10 @@ pub enum ToolError {
     #[error("The tool failed to parse: {0}")]
     ParseFailed(#[from] serde_json::Error),
 
+    /// The SQLite connection error.
+    #[error("SQLite connection error: {0}")]
+    SqliteConnectionError(#[from] rusqlite::Error),
+
     /// Custom error.
     #[error(transparent)]
     Custom(#[from] AnyError),

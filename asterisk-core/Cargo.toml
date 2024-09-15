@@ -15,8 +15,10 @@ lazy_static.workspace = true
 pin-project.workspace = true
 reqwest.workspace = true
 reqwest-eventsource = "0.6.0"
+rusqlite = { version = "0.32.1", features = ["bundled"] }
 serde.workspace = true
 serde_json.workspace = true
+sqlite-vec = "0.1.1"
 strum_macros = "0.26.4"
 thiserror.workspace = true
 tokio.workspace = true
@@ -25,3 +27,4 @@ tracing-subscriber.workspace = true
 
 [dev-dependencies]
 colored.workspace = true
+regex = "1.10.6"
