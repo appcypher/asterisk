@@ -3500,9 +3500,9 @@ checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 
 [[package]]
 name = "sqlite-vec"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89f17944e8bbc74fd7b39e4b833f21169342fb6c53c9f39e784d2e2794271aef"
+checksum = "c1b45ac29cc55cc0d016d6fe99d3513f2f171cbc504d9fe9b988dfab16ea2464"
 dependencies = [
  "cc",
 ]
