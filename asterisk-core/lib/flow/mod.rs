@@ -1,14 +1,9 @@
-//! Asterisk Core
-
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
+//! Flow Builder
 
 //--------------------------------------------------------------------------------------------------
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-pub mod agents;
-pub mod flow;
-pub mod models;
-pub mod tools;
-pub mod utils;
+pub mod edge;
+pub mod node;
+pub mod trigger;

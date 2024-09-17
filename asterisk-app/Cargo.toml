@@ -1,5 +1,5 @@
 [package]
-name = "asterisk-app"
+name = "asterisk"
 version = "0.1.0"
 description = "Asterisk"
 repository = "https://github.com/zerocore-ai/mono"
@@ -22,13 +22,9 @@ tauri-build.workspace = true
 [dependencies]
 serde_json.workspace = true
 serde.workspace = true
-tauri = { workspace = true, features = [
-    "macos-private-api",
-    "unstable",
-    "tray-icon",
-    "wry"
-] }
+tauri = { workspace = true, features = ["unstable", "tray-icon", "wry"] }
 thiserror.workspace = true
+asterisk-core.workspace = true
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

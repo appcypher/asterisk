@@ -1,7 +1,15 @@
+
+/* Tailwind CSS */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /*
   Josh's Custom CSS Reset
   https://www.joshwcomeau.com/css/custom-css-reset/
 */
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -38,24 +46,9 @@ p, h1, h2, h3, h4, h5, h6 {
   isolation: isolate;
 }
 
-/* App-specific styles */
-
-html {
-  border-radius: 14px;
-  background-color: #0000008f;
-  overscroll-behavior: none;
-  height: 100vh;
-}
-
-body {
-  height: 100%;
-  width: 100%;
-}
+/* App Styles */
 
 #root {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  padding: 10px;
+  font-size: 1.5rem;
+  font-family: "Inter Variable";
 }

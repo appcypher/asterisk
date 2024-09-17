@@ -1,14 +1,8 @@
-//! Asterisk Core
-
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
+//! A project is a tree of nodes and branches.
 
 //--------------------------------------------------------------------------------------------------
-// Exports
+// Traits
 //--------------------------------------------------------------------------------------------------
 
-pub mod agents;
-pub mod flow;
-pub mod models;
-pub mod tools;
-pub mod utils;
+/// A project is a tree of nodes and branches.
+pub trait Project: Node {}

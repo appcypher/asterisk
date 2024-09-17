@@ -1,4 +1,4 @@
-use tauri::{App, Manager};
+use tauri::App;
 
 use crate::Result;
 
@@ -6,19 +6,19 @@ use crate::Result;
 // Constants
 //--------------------------------------------------------------------------------------------------
 
-const MAIN_WINDOW_LABEL: &str = "main";
+const _MAIN_WINDOW_LABEL: &str = "main";
 
 //--------------------------------------------------------------------------------------------------
 // Functions: Setup
 //--------------------------------------------------------------------------------------------------
 
-pub(crate) fn setup(app: &mut App) -> Result<()> {
-    // Get the main window
-    let window = &app.get_webview_window(MAIN_WINDOW_LABEL).unwrap();
+pub(crate) fn setup(_app: &mut App) -> Result<()> {
+    // // Get the main window
+    // let window = &app.get_webview_window(MAIN_WINDOW_LABEL).unwrap();
 
-    // Open the devtools in debug mode
-    #[cfg(debug_assertions)]
-    window.open_devtools();
+    // // Open the devtools in debug mode
+    // #[cfg(debug_assertions)]
+    // window.open_devtools();
 
     Ok(())
 }

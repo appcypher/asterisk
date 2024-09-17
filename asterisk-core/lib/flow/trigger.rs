@@ -1,14 +1,10 @@
-//! Asterisk Core
-
-#![warn(missing_docs)]
-#![allow(clippy::module_inception)]
+//! A special type of node that triggers the flow.
 
 //--------------------------------------------------------------------------------------------------
-// Exports
+// Traits
 //--------------------------------------------------------------------------------------------------
 
-pub mod agents;
-pub mod flow;
-pub mod models;
-pub mod tools;
-pub mod utils;
+// pub trait Trigger: Node {
+//     /// Returns the name of the trigger.
+//     fn name(&self) -> String;
+// }

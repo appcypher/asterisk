@@ -41,6 +41,17 @@ repos:
         stages:
           - commit-msg
 
+  - repo: local
+    hooks:
+      - id: lint-client
+        name: lint (client)
+        description: Lint client files.
+        entry: bash -c 'cd asterisk-app/client && pnpm lint'
+        language: system
+        types: []
+        files: ^asterisk-app/client/
+        pass_filenames: false
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.3.0
     hooks:
