@@ -5,9 +5,9 @@
   "identifier": "ai.zerocore.promptbar",
   "build": {
     "devUrl": "http://localhost:5120",
-    "frontendDist": "./client/dist",
-    "beforeDevCommand": "pnpm run dev",
-    "beforeBuildCommand": "pnpm run build"
+    "frontendDist": "../dist",
+    "beforeDevCommand": "cd asterisk-client && pnpm run dev",
+    "beforeBuildCommand": "cd asterisk-client && pnpm run build"
   },
   "app": {
     "withGlobalTauri": true,

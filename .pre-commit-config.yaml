@@ -46,10 +46,10 @@ repos:
       - id: lint-client
         name: lint (client)
         description: Lint client files.
-        entry: bash -c 'cd asterisk-app/client && pnpm lint'
+        entry: bash -c 'cd asterisk-client && pnpm lint'
         language: system
         types: []
-        files: ^asterisk-app/client/
+        files: ^asterisk-client/
         pass_filenames: false
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
