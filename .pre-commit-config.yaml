@@ -43,6 +43,14 @@ repos:
 
   - repo: local
     hooks:
+      - id: fmt-client
+        name: fmt (client)
+        description: Format client files.
+        entry: bash -c 'cd asterisk-client && pnpm fmt'
+        language: system
+        types: []
+        files: ^asterisk-client/
+        pass_filenames: false
       - id: lint-client
         name: lint (client)
         description: Lint client files.

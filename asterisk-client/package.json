@@ -8,16 +8,21 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "fmt": "prettier --write ."
   },
   "license": "MIT",
   "devDependencies": {
+    "@egoist/tailwindcss-icons": "^1.8.1",
     "@eslint/js": "^9.10.0",
+    "@iconify-json/carbon": "^1.2.1",
+    "@iconify-json/mdi": "^1.2.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.10.0",
     "eslint-plugin-solid": "^0.14.3",
     "globals": "^15.9.0",
     "postcss": "^8.4.47",
+    "prettier": "3.3.3",
     "solid-devtools": "^0.29.2",
     "tailwindcss": "^3.4.12",
     "typescript": "^5.3.3",

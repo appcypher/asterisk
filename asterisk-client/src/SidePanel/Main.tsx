@@ -1,19 +1,18 @@
+import { For } from "solid-js";
 import type { Component } from "solid-js";
-import SidePanel from "./SidePanel/SidePanel";
-import AgentDesigner from "./AgentDesigner/AgentDesigner";
-import HoverZone from "./SidePanel/HoverZone";
+import ProjectGroup from "./ProjectGroup";
 
 //--------------------------------------------------------------------------------------------------
 // Component
 //--------------------------------------------------------------------------------------------------
 
-const App: Component = () => {
+const Main: Component = () => {
   return (
-    <div class="relative flex h-full">
-      <HoverZone />
-      <SidePanel />
-      <AgentDesigner />
-    </div>
+    <li class="flex flex-col gap-6">
+      <For each={Array.from({ length: 2 })} fallback={<div>Loading...</div>}>
+        {() => <ProjectGroup />}
+      </For>
+    </li>
   );
 };
 
@@ -21,4 +20,4 @@ const App: Component = () => {
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-export default App;
+export default Main;

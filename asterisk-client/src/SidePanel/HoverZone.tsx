@@ -1,19 +1,12 @@
 import type { Component } from "solid-js";
-import SidePanel from "./SidePanel/SidePanel";
-import AgentDesigner from "./AgentDesigner/AgentDesigner";
-import HoverZone from "./SidePanel/HoverZone";
 
 //--------------------------------------------------------------------------------------------------
 // Component
 //--------------------------------------------------------------------------------------------------
 
-const App: Component = () => {
+const HoverZone: Component = () => {
   return (
-    <div class="relative flex h-full">
-      <HoverZone />
-      <SidePanel />
-      <AgentDesigner />
-    </div>
+    <div class="absolute h-full w-20 bg-black opacity-10 peer/hover-zone" />
   );
 };
 
@@ -21,4 +14,4 @@ const App: Component = () => {
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-export default App;
+export default HoverZone;
