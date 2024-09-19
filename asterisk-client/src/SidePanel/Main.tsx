@@ -8,7 +8,7 @@ import ProjectGroup from "./ProjectGroup";
 
 const Main: Component = () => {
   return (
-    <li class="flex flex-col gap-6">
+    <li class="flex flex-col gap-6 overflow-hidden">
       <For each={Array.from({ length: 2 })} fallback={<div>Loading...</div>}>
         {() => <ProjectGroup />}
       </For>

@@ -5,7 +5,7 @@ import type { Component } from "solid-js";
 //--------------------------------------------------------------------------------------------------
 
 const AgentDesigner: Component = () => {
-  return <div class="size-full bg-yellow-300" />;
+  return <div class="size-full bg-bg-passive" />;
 };
 
 //--------------------------------------------------------------------------------------------------

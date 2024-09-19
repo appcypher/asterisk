@@ -6,13 +6,13 @@ import type { Component } from "solid-js";
 
 const Project: Component = () => {
   return (
-    <div class="flex flex-row gap-1 cursor-pointer bg-orange-700 rounded-lg p-1 hover:bg-orange-500">
-      <div class="size-8 bg-gray-400 rounded-lg" />
-      <div class="bg-white h-full flex items-center flex-auto overflow-hidden">
-        <p class="text-sm bg-white truncate">Project Name</p>
+    <div class="flex flex-row gap-2 cursor-pointer rounded-lg p-1 h-10 hover:bg-bg-selected active:bg-bg-active active:border-border-highlight">
+      <div class="size-6 bg-gray-100 rounded-lg" />
+      <div class=" flex items-center flex-auto overflow-hidden">
+        <p class="text-sm truncate">Project Name</p>
       </div>
-      <div class="flex items-center justify-center bg-orange-200">
-        <span class="i-carbon-chevron-down h-4 bg-blue-200 hover:bg-blue-400" />
+      <div class="flex items-center justify-center">
+        <span class="i-carbon-chevron-down h-4" />
       </div>
     </div>
   );
