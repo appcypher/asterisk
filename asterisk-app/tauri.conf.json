@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "ai.zerocore.promptbar",
   "build": {
-    "devUrl": "http://localhost:5120",
+    "devUrl": "http://localhost:3000",
     "frontendDist": "../dist",
     "beforeDevCommand": "cd asterisk-client && pnpm run dev",
     "beforeBuildCommand": "cd asterisk-client && pnpm run build"

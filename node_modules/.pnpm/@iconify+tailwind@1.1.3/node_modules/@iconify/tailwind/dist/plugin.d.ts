@@ -1,0 +1,156 @@
+import { Config } from 'tailwindcss/types/config';
+import type { IconifyJSON } from '@iconify/types';
+import { PluginCreator } from 'tailwindcss/types/config';
+
+/**
+ * Generate styles for preset list of icons
+ *
+ * Requires knowing full list of icons
+ *
+ * Usage in HTML: <span class="icon--mdi-light icon--mdi-light--home" />
+ *
+ * @deprecated Use addIconSelectors instead
+ */
+export declare function addCleanIconSelectors(icons: string[] | string, options?: CleanIconifyPluginOptions): {
+    handler: PluginCreator;
+    config?: Partial<Config>;
+};
+
+/**
+ * Generate styles for dynamic selector
+ *
+ * Usage in HTML: <span class="icon-[mdi-light--home]" />
+ */
+export declare function addDynamicIconSelectors(options?: DynamicIconifyPluginOptions): {
+    handler: PluginCreator;
+    config?: Partial<Config>;
+};
+
+/**
+ * Generate rules for mask, background and selected icon sets
+ *
+ * Icons should combine either mask or background selector and icon selector
+ *
+ * This plugin generates only square icons. Icons that are not square will be resized to fit square.
+ *
+ * Usage in HTML: <span class="iconify mdi-light--home" />
+ */
+export declare function addIconSelectors(options: IconifyPluginOptions): {
+    handler: PluginCreator;
+    config?: Partial<Config>;
+};
+
+/**
+ * Options for clean class names
+ */
+export declare interface CleanIconifyPluginOptions extends CommonIconifyPluginOptions, Omit<IconCSSIconSetOptions, 'customise'> {
+}
+
+/**
+ * Common options
+ */
+declare interface CommonIconifyPluginOptions {
+    iconSets?: Record<string, IconifyIconSetSource>;
+    customise?: (content: string, name: string, prefix: string) => string;
+}
+
+/**
+ * Formatting modes. Same as in SASS
+ */
+declare type CSSFormatMode = 'expanded' | 'compact' | 'compressed';
+
+/**
+ * Options for dynamic class names
+ */
+export declare interface DynamicIconifyPluginOptions extends CommonIconifyPluginOptions {
+    prefix?: string;
+    overrideOnly?: true;
+    scale?: number;
+}
+
+/**
+ * Formatting options
+ */
+declare interface IconCSSFormatOptions {
+    format?: CSSFormatMode;
+}
+
+/**
+ * Selector for icon
+ */
+declare interface IconCSSIconSelectorOptions {
+    pseudoSelector?: boolean;
+    iconSelector?: string;
+}
+
+/**
+ * Options for generating multiple icons as background/mask
+ */
+declare interface IconCSSIconSetOptions extends IconCSSSharedOptions, IconCSSSelectorOptions, IconCSSModeOptions, IconCSSFormatOptions {
+    customise?: (content: string, name: string) => string;
+}
+
+/**
+ * Icon mode
+ */
+declare type IconCSSMode = 'mask' | 'background';
+
+/**
+ * Mode
+ */
+declare interface IconCSSModeOptions {
+    mode?: IconCSSMode;
+}
+
+/**
+ * Selector for icon when generating data from icon set
+ */
+declare interface IconCSSSelectorOptions extends IconCSSIconSelectorOptions {
+    commonSelector?: string;
+    overrideSelector?: string;
+}
+
+/**
+ * Options common for both multiple icons and single icon
+ */
+declare interface IconCSSSharedOptions {
+    varName?: string | null;
+    forceSquare?: boolean;
+    color?: string;
+    rules?: Record<string, string>;
+}
+
+declare type IconifyIconSetSource = IconifyJSON | string | (() => IconifyJSON);
+
+declare type IconifyPluginListOptions = (string | IconSetOptions)[];
+
+export declare type IconifyPluginOptions = IconifyPluginOptionsObject | IconifyPluginListOptions;
+
+declare interface IconifyPluginOptionsObject {
+    maskSelector?: string;
+    extraMaskRules?: Record<string, string>;
+    backgroundSelector?: string;
+    extraBackgroundRules?: Record<string, string>;
+    iconSelector?: string;
+    varName?: string;
+    scale?: number;
+    square?: boolean;
+    prefixes?: IconifyPluginListOptions;
+    customise?: (content: string, name: string, prefix: string) => string;
+}
+
+declare interface IconSetOptions {
+    prefix?: string;
+    source?: IconSetSource;
+    icons?: IconsListOption;
+    customise?: (content: string, name: string) => string;
+}
+
+declare type IconSetSource = string | IconifyJSON;
+
+/**
+ * Options for main plugin
+ */
+declare type IconsListOption = string[] | ((name: string) => boolean);
+
+export { }
