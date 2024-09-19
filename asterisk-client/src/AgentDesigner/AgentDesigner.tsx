@@ -1,11 +1,17 @@
 import type { Component } from "solid-js";
+import Canvas from "./Canvas";
 
 //--------------------------------------------------------------------------------------------------
 // Component
 //--------------------------------------------------------------------------------------------------
 
 const AgentDesigner: Component = () => {
-  return <div class="size-full bg-bg-passive" />;
+  return (
+    // Viewport
+    <div class="h-[1000px] w-[1000px] bg-purple-50 overflow-hidden">
+      <Canvas />
+    </div>
+  );
 };
 
 //--------------------------------------------------------------------------------------------------

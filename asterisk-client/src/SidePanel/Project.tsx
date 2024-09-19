@@ -6,14 +6,26 @@ import type { Component } from "solid-js";
 
 const Project: Component = () => {
   return (
-    <div class="flex flex-row gap-2 cursor-pointer rounded-lg p-1 h-10 hover:bg-bg-selected active:bg-bg-active active:border-border-highlight">
-      <div class="size-6 bg-gray-100 rounded-lg" />
-      <div class=" flex items-center flex-auto overflow-hidden">
-        <p class="text-sm truncate">Project Name</p>
-      </div>
-      <div class="flex items-center justify-center">
-        <span class="i-carbon-chevron-down h-4" />
-      </div>
+    <div
+      class="
+      flex flex-row gap-2 items-center
+      cursor-pointer rounded-lg p-2 h-10 overflow-hidden
+      bg-white
+      hover:bg-purple-100 active:bg-purple-200
+      group/project
+      "
+    >
+      <div class="size-6 bg-gray-100 flex-none rounded-lg" />
+      <p
+        class="
+        text-sm truncate flex-auto select-none
+        text-gray-800
+        group-hover/project:text-black
+        "
+      >
+        Project Name
+      </p>
+      <span class="hidden group-hover/project:block i-carbon-add h-5" />
     </div>
   );
 };
