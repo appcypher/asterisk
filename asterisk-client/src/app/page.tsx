@@ -1,4 +1,7 @@
-import AgentDesigner from "./components/AgentDesigner/ AgentDesigner";
+"use client";
+
+import { StrictMode } from "react";
+import AgentDesigner from "./components/AgentDesigner/AgentDesigner";
 import HoverZone from "./components/SidePanel/HoverZone";
 import SidePanel from "./components/SidePanel/SidePanel";
 
@@ -8,11 +11,13 @@ import SidePanel from "./components/SidePanel/SidePanel";
 
 const Home = () => {
   return (
-    <div className="relative flex h-full">
-      {false && <HoverZone />}
-      {true && <SidePanel />}
-      <AgentDesigner />
-    </div>
+    <StrictMode>
+      <div className="relative flex h-full">
+        {false && <HoverZone />}
+        {true && <SidePanel />}
+        <AgentDesigner />
+      </div>
+    </StrictMode>
   );
 };
 

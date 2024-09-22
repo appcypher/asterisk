@@ -1,26 +1,16 @@
-import Project from "./Project";
+import { Handle, NodeProps, Position } from "@xyflow/react";
+import { Node } from "./types/node";
 
 //--------------------------------------------------------------------------------------------------
 // Component
 //--------------------------------------------------------------------------------------------------
 
-const ProjectGroup = () => {
+const TriggerNode = ({ data: { label } }: NodeProps<Node>) => {
   return (
-    <div
-      className="
-        flex flex-col gap-1
-        "
-    >
-      <div className="p-1">
-        <div className="h-px bg-gray-100" />
-      </div>
-      <ul className="flex flex-col gap-1">
-        {Array.from({ length: 10 }).map((_, index) => (
-          <li key={index}>
-            <Project />
-          </li>
-        ))}
-      </ul>
+    <div>
+      <Handle type="source" position={Position.Top} />
+      <p>{label}</p>
+      <Handle type="target" position={Position.Bottom} />
     </div>
   );
 };
@@ -29,4 +19,4 @@ const ProjectGroup = () => {
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-export default ProjectGroup;
+export default TriggerNode;

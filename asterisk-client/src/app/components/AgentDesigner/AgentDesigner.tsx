@@ -2,8 +2,14 @@
 // Component
 //--------------------------------------------------------------------------------------------------
 
+import Canvas from "./Canvas";
+
 const AgentDesigner = () => {
-  return <div className="size-full bg-purple-50 overflow-hidden"></div>;
+  return (
+    <div className="size-full bg-purple-50 overflow-hidden">
+      <Canvas />
+    </div>
+  );
 };
 
 //--------------------------------------------------------------------------------------------------

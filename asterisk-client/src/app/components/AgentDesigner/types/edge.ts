@@ -1,23 +1,29 @@
-import ProjectGroup from "./ProjectGroup";
+import { Edge as RFEdge } from "@xyflow/react";
 
 //--------------------------------------------------------------------------------------------------
-// Component
+// Types
 //--------------------------------------------------------------------------------------------------
 
-const Main = () => {
-  return (
-    <ul className="flex flex-col overflow-hidden gap-2">
-      {[...Array(2)].map((_, index) => (
-        <li key={index}>
-          <ProjectGroup />
-        </li>
-      ))}
-    </ul>
-  );
+type Edge = RFEdge<EdgeData>;
+
+type EdgeData = {
+  label: string;
 };
+
+type EdgesAction = {
+  type: EdgeActionType;
+  payload: Edge[];
+};
+
+enum EdgeActionType {
+  ADD_EDGES = "ADD_EDGES",
+  REMOVE_EDGES = "REMOVE_EDGES",
+  UPDATE_EDGES = "UPDATE_EDGES",
+}
 
 //--------------------------------------------------------------------------------------------------
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-export default Main;
+export { EdgeActionType };
+export type { Edge, EdgeData, EdgesAction };
