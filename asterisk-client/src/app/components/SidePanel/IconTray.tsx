@@ -14,7 +14,7 @@ type IconTrayItemProps = {
 
 const IconTray = () => {
   return (
-    <ul className="flex flex-row gap-2 justify-start">
+    <ul className="flex flex-row gap-2 justify-start p-2">
       <IconTrayItem
         filled_icon="icon-[fluent--bot-sparkle-20-filled]"
         regular_icon="icon-[fluent--bot-sparkle-20-regular]"
@@ -28,6 +28,11 @@ const IconTray = () => {
       <IconTrayItem
         filled_icon="icon-[fluent--box-16-filled]"
         regular_icon="icon-[fluent--box-16-regular]"
+        // selected
+      />
+      <IconTrayItem
+        filled_icon="icon-[fluent--database-stack-16-filled]"
+        regular_icon="icon-[fluent--database-stack-16-regular]"
         // selected
       />
     </ul>
@@ -44,7 +49,7 @@ const IconTrayItem = ({
       <button
         className={`
           rounded-lg  active:scale-95
-          size-10 flex items-center justify-center ${selected ? "bg-violet-600 hover:bg-violet-700 " : "bg-white hover:bg-purple-100 active:bg-purple-200"}
+          size-8 flex items-center justify-center ${selected ? "bg-violet-600 hover:bg-violet-700 " : "bg-white hover:bg-purple-100 active:bg-purple-200"}
           group/icon-tray-item
         `}
       >

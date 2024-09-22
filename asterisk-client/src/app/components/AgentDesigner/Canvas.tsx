@@ -4,21 +4,22 @@ import {
   applyNodeChanges,
   Background,
   Connection,
-  Controls,
   EdgeChange,
   NodeChange,
   NodeTypes,
   ReactFlow,
   SelectionMode,
+  useViewport,
+  Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Reducer, useCallback, useReducer, useState } from "react";
+import { Dispatch, Reducer, useCallback, useReducer, useState } from "react";
 import { initialNodes, nodeReducer } from "./state/nodes";
 import BackgroundContextMenu from "./BackgroundContextMenu";
-import { NodesAction, Node, NodeActionType } from "./types/node";
+import { NodesAction, Node, NodeActionType, NodeType } from "./types/node";
 import { Edge, EdgeActionType, EdgesAction } from "./types/edge";
 import { edgeReducer, initialEdges } from "./state/edges";
-import TriggerNode from "./Node";
+import { TriggerNode, ActionNode } from "./Node";
 
 //--------------------------------------------------------------------------------------------------
 // State
@@ -26,28 +27,19 @@ import TriggerNode from "./Node";
 
 const nodeTypes: NodeTypes = {
   TRIGGER: TriggerNode,
+  ACTION: ActionNode,
 };
 
 //--------------------------------------------------------------------------------------------------
-// Component
+// Hooks
 //--------------------------------------------------------------------------------------------------
 
-const Canvas = () => {
-  // == Hooks ==
-  const [nodes, nodesDispatch] = useReducer<Reducer<Node[], NodesAction>>(
-    nodeReducer,
-    initialNodes,
-  );
-
-  const [edges, edgesDispatch] = useReducer<Reducer<Edge[], EdgesAction>>(
-    edgeReducer,
-    initialEdges,
-  );
-
-  const [contextMenuMouseEvent, setContextMenuMouseEvent] =
-    useState<React.MouseEvent<HTMLDivElement> | null>(null);
-
-  // == Handlers ==
+const useCanvas = (
+  nodes: Node[],
+  edges: Edge[],
+  nodesDispatch: Dispatch<NodesAction>,
+  edgesDispatch: Dispatch<EdgesAction>,
+) => {
   const onNodesChange = useCallback(
     (changes: NodeChange<Node>[]) => {
       const n = applyNodeChanges(changes, nodes);
@@ -77,6 +69,103 @@ const Canvas = () => {
     [edgesDispatch, edges],
   );
 
+  return {
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+  };
+};
+
+//--------------------------------------------------------------------------------------------------
+// Handlers
+//--------------------------------------------------------------------------------------------------
+
+const onAddTriggerNode =
+  (
+    nodesDispatch: Dispatch<NodesAction>,
+    setContextMenuMouseEvent: Dispatch<React.MouseEvent<HTMLDivElement> | null>,
+    viewport: Viewport,
+  ) =>
+  <E extends HTMLElement>(event: React.MouseEvent<E>) => {
+    addNewNode(
+      event,
+      nodesDispatch,
+      NodeType.TRIGGER,
+      "Empty Trigger Node",
+      viewport,
+    );
+    setContextMenuMouseEvent(null);
+  };
+
+const onAddActionNode =
+  (
+    nodesDispatch: Dispatch<NodesAction>,
+    setContextMenuMouseEvent: Dispatch<React.MouseEvent<HTMLDivElement> | null>,
+    viewport: Viewport,
+  ) =>
+  <E extends HTMLElement>(event: React.MouseEvent<E>) => {
+    addNewNode(
+      event,
+      nodesDispatch,
+      NodeType.ACTION,
+      "Empty Action Node",
+      viewport,
+    );
+    setContextMenuMouseEvent(null);
+  };
+
+const addNewNode = <E extends HTMLElement>(
+  event: React.MouseEvent<E>,
+  nodesDispatch: Dispatch<NodesAction>,
+  type: NodeType,
+  label: string,
+  viewport: Viewport,
+) => {
+  nodesDispatch({
+    type: NodeActionType.ADD_NODES,
+    payload: [
+      {
+        id: crypto.randomUUID(),
+        type,
+        position: {
+          x: (event.clientX - viewport.x) / viewport.zoom - 160,
+          y: (event.clientY - viewport.y) / viewport.zoom - 25,
+        },
+        data: { label },
+      },
+    ],
+  });
+};
+
+//--------------------------------------------------------------------------------------------------
+// Component
+//--------------------------------------------------------------------------------------------------
+
+const Canvas = () => {
+  // == Hooks ==
+  const [nodes, nodesDispatch] = useReducer<Reducer<Node[], NodesAction>>(
+    nodeReducer,
+    initialNodes,
+  );
+
+  const [edges, edgesDispatch] = useReducer<Reducer<Edge[], EdgesAction>>(
+    edgeReducer,
+    initialEdges,
+  );
+
+  const [contextMenuMouseEvent, setContextMenuMouseEvent] =
+    useState<React.MouseEvent<HTMLDivElement> | null>(null);
+
+  const viewport = useViewport();
+
+  // == Handlers ==
+  const { onNodesChange, onEdgesChange, onConnect } = useCanvas(
+    nodes,
+    edges,
+    nodesDispatch,
+    edgesDispatch,
+  );
+
   const onContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     setContextMenuMouseEvent(event);
@@ -86,10 +175,11 @@ const Canvas = () => {
   return (
     <div className="h-full w-full">
       <ReactFlow
-        className="!cursor-pointer"
         panOnScroll
         selectionOnDrag
         panOnDrag={[1, 2]}
+        snapToGrid
+        snapGrid={[10, 10]}
         selectionMode={SelectionMode.Partial}
         proOptions={{ hideAttribution: true }}
         nodes={nodes}
@@ -101,19 +191,20 @@ const Canvas = () => {
         nodeTypes={nodeTypes}
       >
         <Background />
-        <Controls /> {/* TODO: Add custom controls */}
         {contextMenuMouseEvent && (
           <BackgroundContextMenu
             event={contextMenuMouseEvent}
-            onAddTrigger={() => {
-              console.log("add trigger");
-            }}
-            onAddAction={() => {
-              console.log("add action");
-            }}
-            onAddNote={() => {
-              console.log("add note");
-            }}
+            onAddTriggerNode={onAddTriggerNode(
+              nodesDispatch,
+              setContextMenuMouseEvent,
+              viewport,
+            )}
+            onAddActionNode={onAddActionNode(
+              nodesDispatch,
+              setContextMenuMouseEvent,
+              viewport,
+            )}
+            onAddNote={() => console.log("add note")}
           />
         )}
       </ReactFlow>

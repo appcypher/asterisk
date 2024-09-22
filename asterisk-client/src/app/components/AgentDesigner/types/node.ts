@@ -1,4 +1,4 @@
-import { Node as RFNode, XYPosition } from "@xyflow/react";
+import { Node as RFNode } from "@xyflow/react";
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -29,21 +29,8 @@ enum NodeActionType {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Methods
-//--------------------------------------------------------------------------------------------------
-
-const NodeFactory = {
-  createTriggerNode: (id: string, position: XYPosition): Node => ({
-    id,
-    type: NodeType.TRIGGER,
-    position,
-    data: { label: "Triggering" },
-  }),
-};
-
-//--------------------------------------------------------------------------------------------------
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-export { NodeType, NodeActionType, NodeFactory };
+export { NodeType, NodeActionType };
 export type { Node, NodeData, NodesAction };

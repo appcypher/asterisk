@@ -6,31 +6,26 @@ import { useEffect, useRef, useState } from "react";
 
 type BackgroundContextMenuProps = {
   event: React.MouseEvent<HTMLDivElement>;
-  onAddTrigger: () => void;
-  onAddAction: () => void;
-  onAddNote: () => void;
+  onAddTriggerNode: (event: React.MouseEvent<HTMLLIElement>) => void;
+  onAddActionNode: (event: React.MouseEvent<HTMLLIElement>) => void;
+  onAddNote: (event: React.MouseEvent<HTMLLIElement>) => void;
 };
 
 //--------------------------------------------------------------------------------------------------
-// Component
+// Hooks
 //--------------------------------------------------------------------------------------------------
 
 /**
- * BackgroundContextMenu is a component that renders a context menu for the background of the
- * agent designer.
+ * useContextMenuPosition is a hook that updates the position of a context menu based on the event
+ * and the dimensions of the menu.
  */
-const BackgroundContextMenu = ({
-  event,
-  onAddTrigger,
-  onAddAction,
-  onAddNote,
-}: BackgroundContextMenuProps) => {
-  const [x, setX] = useState(0);
-  const [y, setY] = useState(0);
-
-  const ref = useRef<HTMLMenuElement>(null);
-
-  // Update the position of the menu when the event changes
+const useContextMenuPosition = (
+  event: React.MouseEvent<HTMLDivElement>,
+  ref: React.RefObject<HTMLMenuElement>,
+  setX: React.Dispatch<React.SetStateAction<number>>,
+  setY: React.Dispatch<React.SetStateAction<number>>,
+  setVisible: React.Dispatch<React.SetStateAction<boolean>>,
+) => {
   useEffect(() => {
     const x = event.clientX;
     const y = event.clientY;
@@ -55,7 +50,56 @@ const BackgroundContextMenu = ({
     } else {
       setY(y + 2);
     }
-  }, [event]);
+
+    setVisible(true);
+  }, [event, ref, setX, setY, setVisible]);
+};
+
+/**
+ * useOutsideClick is a hook that updates the position of a context menu based on the event
+ * and the dimensions of the menu.
+ */
+const useOutsideClick = (
+  ref: React.RefObject<HTMLMenuElement>,
+  setX: React.Dispatch<React.SetStateAction<number>>,
+  setY: React.Dispatch<React.SetStateAction<number>>,
+  setVisible: React.Dispatch<React.SetStateAction<boolean>>,
+) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setX(0);
+        setY(0);
+        setVisible(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, [ref, setX, setY, setVisible]);
+};
+
+//--------------------------------------------------------------------------------------------------
+// Component
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * BackgroundContextMenu is a component that renders a context menu for the background of the
+ * agent designer.
+ */
+const BackgroundContextMenu = ({
+  event,
+  onAddTriggerNode,
+  onAddActionNode,
+  onAddNote,
+}: BackgroundContextMenuProps) => {
+  const [x, setX] = useState(0);
+  const [y, setY] = useState(0);
+  const ref = useRef<HTMLMenuElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useContextMenuPosition(event, ref, setX, setY, setVisible);
+  useOutsideClick(ref, setX, setY, setVisible);
 
   return (
     <menu
@@ -65,21 +109,23 @@ const BackgroundContextMenu = ({
         left: x,
         top: y,
       }}
-      className="
+      className={`
       bg-white p-2 rounded-lg shadow-lg
       flex flex-col gap-1
       border border-gray-200
-      z-10"
+      ${visible ? "visible" : "invisible"}
+      z-10
+      `}
     >
       <MenuItem
         icon="icon-[carbon--lightning]"
         text="Add Trigger Node"
-        onClick={onAddTrigger}
+        onClick={onAddTriggerNode}
       />
       <MenuItem
         icon="icon-[carbon--play]"
         text="Add Action Node"
-        onClick={onAddAction}
+        onClick={onAddActionNode}
       />
       <MenuItem
         icon="icon-[carbon--align-box-bottom-right]"
@@ -97,7 +143,7 @@ const MenuItem = ({
 }: {
   icon: string;
   text: string;
-  onClick: () => void;
+  onClick: (event: React.MouseEvent<HTMLLIElement>) => void;
 }) => {
   return (
     <li
@@ -107,7 +153,9 @@ const MenuItem = ({
       active:bg-purple-200 active:text-gray-800 active:scale-[0.98]
       group/menu-item
       "
-      onClick={onClick}
+      onClick={(event: React.MouseEvent<HTMLLIElement>) => {
+        onClick(event);
+      }}
     >
       <span
         className={`h-4 ${icon} text-gray-400 group-hover/menu-item:text-gray-800`}

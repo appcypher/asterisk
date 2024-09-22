@@ -11,6 +11,7 @@ const Header = () => {
         ring-offset-2 ring-2 ring-purple-400
         hover:ring-purple-500 active:ring-purple-600
         hover:bg-purple-100 active:bg-purple-200
+        active:scale-[0.99]
         group/header
         "
       >
