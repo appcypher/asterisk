@@ -127,7 +127,7 @@ const Canvas = () => {
       <ReactFlow
         panOnScroll
         selectionOnDrag
-        panOnDrag={[1, 2]}
+        panOnDrag={[1]}
         snapToGrid
         snapGrid={[10, 10]}
         selectionMode={SelectionMode.Partial}
