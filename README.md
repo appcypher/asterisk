@@ -3,7 +3,7 @@
     <img src="https://raw.githubusercontent.com/appcypher/asterisk/main/assets/a_logo.png" alt="asterisk Logo" width="100"></img>
   </a> -->
 
-  <h1 align="center">asterisk</h1>
+  <h1 align="center">asterisk<span style="font-size: 1em; color: red;">*</span></h1>
 
   <!-- <p>
     <a href="https://crates.io/crates/asterisk">
@@ -37,8 +37,6 @@
 
 ## License
 
-This project is licensed under the [Apache License 2.0](./LICENSE), or
-[http://www.apache.org/licenses/LICENSE-2.0][apache].
+This project is licensed under the [Apache License 2.0](./LICENSE).
 
-
-[apache]: https://www.apache.org/licenses/LICENSE-2.0
+<sub>`asterisk` means `little star`</sub>
