@@ -24,6 +24,8 @@
   </p> -->
 </div>
 
+**`asterisk`** is an intuitive visual AI agent builder designed to supercharge your productivity by 100x. Easily create and manage AI agents like never before.
+
 </br>
 
 > [!WARNING]
