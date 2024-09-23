@@ -20,6 +20,7 @@ import { Edge, EdgeActionType, EdgesAction } from "./types/edge";
 import { edgeReducer, initialEdges } from "./state/edges";
 import { TriggerNode, ActionNode } from "./Node";
 import ContextMenu from "./ContextMenu";
+import Controls from "./Controls";
 
 //--------------------------------------------------------------------------------------------------
 // State
@@ -142,6 +143,7 @@ const Canvas = () => {
         nodeTypes={nodeTypes}
       >
         <Background />
+        <Controls />
         {paneContextMenuEvent && (
           <ContextMenu
             event={paneContextMenuEvent}
