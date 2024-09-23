@@ -8,6 +8,7 @@ type Node = RFNode<NodeData>;
 
 type NodeData = {
   label: string;
+  pinned?: boolean;
 };
 
 enum NodeType {
