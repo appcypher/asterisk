@@ -18,7 +18,7 @@ import { initialNodes, nodeReducer } from "./state/nodes";
 import { NodesAction, Node, NodeActionType, NodeType } from "./types/node";
 import { Edge, EdgeActionType, EdgesAction } from "./types/edge";
 import { edgeReducer, initialEdges } from "./state/edges";
-import { TriggerNode, ActionNode } from "./Node";
+import { TriggerNode, ActionNode, NoteNode } from "./Node";
 import ContextMenu from "./ContextMenu";
 import Controls from "./Controls";
 
@@ -29,6 +29,7 @@ import Controls from "./Controls";
 const nodeTypes: NodeTypes = {
   TRIGGER: TriggerNode,
   ACTION: ActionNode,
+  NOTE: NoteNode,
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -155,10 +156,10 @@ const Canvas = () => {
                   setPaneContextMenuEvent(null);
                   addNewNode(
                     event,
+                    viewport,
                     nodesDispatch,
                     NodeType.TRIGGER,
                     "Empty Trigger Node",
-                    viewport,
                   );
                 },
               },
@@ -169,19 +170,19 @@ const Canvas = () => {
                   setPaneContextMenuEvent(null);
                   addNewNode(
                     event,
+                    viewport,
                     nodesDispatch,
                     NodeType.ACTION,
                     "Empty Action Node",
-                    viewport,
                   );
                 },
               },
               {
                 text: "Add Note",
                 icon: "icon-[carbon--align-box-bottom-right]",
-                onClick: () => {
+                onClick: (event) => {
                   setPaneContextMenuEvent(null);
-                  console.log("add note");
+                  addNewNode(event, viewport, nodesDispatch, NodeType.NOTE);
                 },
               },
             ]}
@@ -222,10 +223,10 @@ const Canvas = () => {
 
 const addNewNode = <E extends HTMLElement>(
   event: React.MouseEvent<E>,
+  viewport: Viewport,
   nodesDispatch: Dispatch<NodesAction>,
   type: NodeType,
-  label: string,
-  viewport: Viewport,
+  label?: string,
 ) => {
   nodesDispatch({
     type: NodeActionType.ADD_NODES,
@@ -238,6 +239,15 @@ const addNewNode = <E extends HTMLElement>(
           y: (event.clientY - viewport.y) / viewport.zoom - 25,
         },
         data: { label },
+        className:
+          type === NodeType.NOTE
+            ? `
+              w-60 p-2 bg-yellow-200 rounded-md border border-yellow-300 shadow-sm
+              hover:cursor-pointer hover:shadow-md hover:border-purple-400 active:bg-yellow-300
+              active:scale-[0.98]
+              group/node-box
+              `
+            : "",
       },
     ],
   });

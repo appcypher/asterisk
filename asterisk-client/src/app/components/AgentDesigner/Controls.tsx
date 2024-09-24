@@ -44,7 +44,7 @@ const ControlButton = ({
     <button
       className="
       group/button
-      size-10 flex items-center justify-center bg-white
+      size-8 flex items-center justify-center bg-white
       [&:not(:first-child)]:border-l [&:not(:first-child)]:border-gray-200
       hover:bg-purple-50 active:bg-purple-100
       first:rounded-l-md last:rounded-r-md

@@ -2,68 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-/*
-  Josh's Custom CSS Reset
-  https://www.joshwcomeau.com/css/custom-css-reset/
-*/
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-* {
-  margin: 0;
-}
-
-body {
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-img,
-picture,
-video,
-canvas {
-  display: block;
-  max-width: 100%;
-}
-
-input,
-button,
-textarea,
-select {
-  font: inherit;
-}
-
-input {
-  border: none;
-  outline: none;
-  background: transparent;
-}
-
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  overflow-wrap: break-word;
-}
-
-#root,
-#__next {
-  isolation: isolate;
-}
-
 /* App Styles */
+
+h1 {
+  @apply text-2xl;
+}
+
+h2 {
+  @apply text-xl;
+}
+
+h3 {
+  @apply text-lg;
+}
+
+a {
+  @apply text-purple-600 underline;
+}
 
 html,
 body {
-  height: 100%;
-  width: 100%;
+  @apply h-full w-full;
 }
 
 /* React Flow */

@@ -7,15 +7,15 @@ import { Node as RFNode } from "@xyflow/react";
 type Node = RFNode<NodeData>;
 
 type NodeData = {
-  label: string;
+  label?: string;
   pinned?: boolean;
 };
 
 enum NodeType {
-  EMPTY = "EMPTY",
   TRIGGER = "TRIGGER",
   ACTION = "ACTION",
   TERMINAL = "TERMINAL",
+  NOTE = "NOTE",
 }
 
 type NodesAction = {

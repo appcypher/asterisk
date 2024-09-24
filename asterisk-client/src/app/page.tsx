@@ -15,7 +15,7 @@ const Home = () => {
       <div className="relative flex h-full">
         <AgentDesigner />
         {false && <HoverZone />}
-        {false && <SidePanel />}
+        {true && <SidePanel />}
       </div>
     </StrictMode>
   );
