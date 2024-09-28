@@ -44,7 +44,16 @@ const nodeReducer = (state: Node[], action: NodesAction): Node[] => {
     case NodeActionType.ADD_NODES:
       return [...state, ...action.payload];
     case NodeActionType.UPDATE_NODES:
-      return action.payload;
+      // Create a map for quick lookup of updated nodes by their ID
+      const updatedNodesMap = new Map(
+        action.payload.map((node) => [node.id, node]),
+      );
+
+      // Iterate over the current state and update nodes as needed
+      return state.map((node) => {
+        const updatedNode = updatedNodesMap.get(node.id);
+        return updatedNode ? { ...node, ...updatedNode } : node;
+      });
     case NodeActionType.REMOVE_NODES:
       const idsToRemove = new Set(action.payload.map((node) => node.id));
       return state.filter((node) => !idsToRemove.has(node.id));

@@ -16,7 +16,6 @@ type NodeResizerProps = {
   minHeight?: number;
   maxWidth?: number;
   maxHeight?: number;
-  keepAspectRatio?: boolean;
   handleStyle?: CSSProperties;
   lineStyle?: CSSProperties;
 };

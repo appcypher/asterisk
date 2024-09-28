@@ -15,7 +15,6 @@ import {
   thematicBreakPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { NodeResizer } from "./NodeResizer";
 import { Node } from "./state/nodes";
 
 //--------------------------------------------------------------------------------------------------
@@ -41,43 +40,41 @@ const ActionNode = ({ data: { label } }: NodeProps<Node>) => {
   );
 };
 
-const NoteNode = ({ id }: NodeProps<Node>) => {
+const NoteNode = () => {
   return (
-    <NodeResizer id={id}>
-      <div
-        className="
+    <div
+      className="
         note-rf-drag-area
         w-60 p-2 bg-yellow-200 rounded-md border border-yellow-300 shadow-sm
         hover:cursor-pointer hover:shadow-md hover:border-purple-400 active:bg-yellow-300
         active:scale-[0.98]
         group/node-box
         "
-        onClick={(event) => {
-          event.stopPropagation();
-          event.preventDefault();
-          if (event.detail === 2) {
-            console.log("double clicked");
-          }
-        }}
-      >
-        {/* <RFNodeResizer /> */}
-        <MDXEditor
-          markdown={""}
-          readOnly
-          plugins={[
-            headingsPlugin(),
-            listsPlugin(),
-            linkPlugin(),
-            quotePlugin(),
-            thematicBreakPlugin(), // TODO: Not working
-            tablePlugin(), // TODO: Not working
-            markdownShortcutPlugin(),
-          ]}
-          // Using tailwind typography with some customizations
-          contentEditableClassName="prose prose-mdxeditor"
-        />
-      </div>
-    </NodeResizer>
+      onClick={(event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        if (event.detail === 2) {
+          console.log("double clicked");
+        }
+      }}
+    >
+      {/* <RFNodeResizer /> */}
+      <MDXEditor
+        markdown={""}
+        readOnly
+        plugins={[
+          headingsPlugin(),
+          listsPlugin(),
+          linkPlugin(),
+          quotePlugin(),
+          thematicBreakPlugin(), // TODO: Not working
+          tablePlugin(), // TODO: Not working
+          markdownShortcutPlugin(),
+        ]}
+        // Using tailwind typography with some customizations
+        contentEditableClassName="prose prose-mdxeditor"
+      />
+    </div>
   );
 };
 

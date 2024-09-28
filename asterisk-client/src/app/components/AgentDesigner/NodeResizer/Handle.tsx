@@ -3,13 +3,15 @@ import {
   Dispatch,
   SetStateAction,
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
 } from "react";
-import { Node } from "../state/nodes";
+import { Node, NodeActionType } from "../state/nodes";
 import { CSSDimensions } from ".";
-// import { useViewport } from "@xyflow/react";
+import { CanvasContext } from "../CanvasContextProvider";
+import { useViewport } from "@xyflow/react";
 
 //--------------------------------------------------------------------------------------------------
 // Types
@@ -38,14 +40,15 @@ const Handle = ({
   position,
   hide,
   style,
-  // node,
+  node,
   // setDimensions,
 }: HandleProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [midWidth, setMidWidth] = useState(0);
   const [midHeight, setMidHeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  // const viewport = useViewport();
+  const { nodesDispatch } = useContext(CanvasContext);
+  const { zoom } = useViewport();
 
   const onMouseDown = useCallback(() => {
     console.log("Mouse down on handle: ", position);
@@ -57,10 +60,29 @@ const Handle = ({
     setIsDragging(false);
   }, [position]);
 
-  const onMouseMove = useCallback((event: MouseEvent) => {
-    console.log("Mouse move on: ", event);
-    // const { x, y } = viewport.getViewport();
-  }, []);
+  const onMouseMove = useCallback(
+    (event: MouseEvent) => {
+      console.log("Mouse move on: ", event);
+      if (isDragging) {
+        nodesDispatch({
+          type: NodeActionType.UPDATE_NODES,
+          payload: [
+            {
+              ...node,
+              // TODO: Rather than adding the movement to the node's position, we should be
+              // calculating the new position based on the mouse position. Will tackle this problem
+              // later.
+              position: {
+                x: node.position.x + event.movementX / zoom,
+                y: node.position.y + event.movementY / zoom,
+              },
+            },
+          ],
+        });
+      }
+    },
+    [isDragging, nodesDispatch, node, zoom],
+  );
 
   // Setting and removing event listeners
   useEffect(() => {
