@@ -13,14 +13,13 @@ import {
   Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Dispatch, Reducer, useCallback, useReducer, useState } from "react";
-import { initialNodes, nodeReducer } from "./state/nodes";
-import { NodesAction, Node, NodeActionType, NodeType } from "./types/node";
-import { Edge, EdgeActionType, EdgesAction } from "./types/edge";
-import { edgeReducer, initialEdges } from "./state/edges";
+import { Dispatch, useCallback, useContext, useState } from "react";
+import { Node, NodeActionType, NodesAction, NodeType } from "./state/nodes";
+import { Edge, EdgesAction, EdgeActionType } from "./state/edges";
 import { TriggerNode, ActionNode, NoteNode } from "./Node";
 import ContextMenu from "./ContextMenu";
 import Controls from "./Controls";
+import { CanvasContext } from "./CanvasContextProvider";
 
 //--------------------------------------------------------------------------------------------------
 // State
@@ -83,18 +82,11 @@ const useCanvas = (
 //--------------------------------------------------------------------------------------------------
 
 const Canvas = () => {
-  // == Hooks ==
+  // ====== Hooks ======
   const viewport = useViewport();
 
-  const [nodes, nodesDispatch] = useReducer<Reducer<Node[], NodesAction>>(
-    nodeReducer,
-    initialNodes,
-  );
-
-  const [edges, edgesDispatch] = useReducer<Reducer<Edge[], EdgesAction>>(
-    edgeReducer,
-    initialEdges,
-  );
+  const { nodes, edges, nodesDispatch, edgesDispatch } =
+    useContext(CanvasContext);
 
   const [paneContextMenuEvent, setPaneContextMenuEvent] = useState<
     React.MouseEvent<Element> | MouseEvent | null
@@ -105,7 +97,7 @@ const Canvas = () => {
     node: Node;
   } | null>(null);
 
-  // == Handlers ==
+  // ====== Handlers ======
   const { onNodesChange, onEdgesChange, onConnect } = useCanvas(
     nodes,
     edges,
@@ -123,7 +115,7 @@ const Canvas = () => {
     setNodeContextMenuData({ event, node });
   };
 
-  // == Render ==
+  // ====== Render ======
   return (
     <div className="h-full w-full">
       <ReactFlow
@@ -238,16 +230,9 @@ const addNewNode = <E extends HTMLElement>(
           x: (event.clientX - viewport.x) / viewport.zoom - 160,
           y: (event.clientY - viewport.y) / viewport.zoom - 25,
         },
+        // Specify where drag is allowed for Note Nodes.
+        dragHandle: type === NodeType.NOTE ? ".note-rf-drag-area" : undefined,
         data: { label },
-        className:
-          type === NodeType.NOTE
-            ? `
-              w-60 p-2 bg-yellow-200 rounded-md border border-yellow-300 shadow-sm
-              hover:cursor-pointer hover:shadow-md hover:border-purple-400 active:bg-yellow-300
-              active:scale-[0.98]
-              group/node-box
-              `
-            : "",
       },
     ],
   });

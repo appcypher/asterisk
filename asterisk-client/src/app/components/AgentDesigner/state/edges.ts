@@ -1,7 +1,28 @@
-import { Edge, EdgeActionType, EdgesAction } from "../types/edge";
+import { Edge as RFEdge } from "@xyflow/react";
 
 //--------------------------------------------------------------------------------------------------
-// State
+// Types
+//--------------------------------------------------------------------------------------------------
+
+type Edge = RFEdge<EdgeData>;
+
+type EdgeData = {
+  label: string;
+};
+
+type EdgesAction = {
+  type: EdgeActionType;
+  payload: Edge[];
+};
+
+enum EdgeActionType {
+  ADD_EDGES = "ADD_EDGES",
+  REMOVE_EDGES = "REMOVE_EDGES",
+  UPDATE_EDGES = "UPDATE_EDGES",
+}
+
+//--------------------------------------------------------------------------------------------------
+// Constants
 //--------------------------------------------------------------------------------------------------
 
 const initialEdges: Edge[] = [];
@@ -28,4 +49,5 @@ const edgeReducer = (state: Edge[], action: EdgesAction): Edge[] => {
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-export { edgeReducer, initialEdges };
+export { edgeReducer, initialEdges, EdgeActionType };
+export type { Edge, EdgeData, EdgesAction };

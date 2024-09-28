@@ -1,5 +1,9 @@
-import { Handle, NodeProps, NodeResizer, Position } from "@xyflow/react";
-import { Node } from "./types/node";
+import {
+  Handle,
+  NodeProps,
+  Position,
+  // NodeResizer as RFNodeResizer,
+} from "@xyflow/react";
 import {
   headingsPlugin,
   linkPlugin,
@@ -11,6 +15,8 @@ import {
   thematicBreakPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
+import { NodeResizer } from "./NodeResizer";
+import { Node } from "./state/nodes";
 
 //--------------------------------------------------------------------------------------------------
 // Component
@@ -19,7 +25,7 @@ import "@mdxeditor/editor/style.css";
 const TriggerNode = ({ data: { label } }: NodeProps<Node>) => {
   return (
     <>
-      <NodeBox label={label ?? "Trigger"} />
+      <MainNode label={label ?? "Trigger"} />
       <Handle type="target" position={Position.Bottom} />
     </>
   );
@@ -29,54 +35,53 @@ const ActionNode = ({ data: { label } }: NodeProps<Node>) => {
   return (
     <>
       <Handle type="source" position={Position.Top} />
-      <NodeBox label={label ?? "Action"} />
+      <MainNode label={label ?? "Action"} />
       <Handle type="target" position={Position.Bottom} />
     </>
   );
 };
 
-const NoteNode = () => {
+const NoteNode = ({ id }: NodeProps<Node>) => {
   return (
-    <div
-      // className="
-      //   w-60 p-2 bg-yellow-200 rounded-md border border-yellow-300 shadow-sm
-      //   hover:cursor-pointer hover:shadow-md hover:border-purple-400 active:bg-yellow-300
-      //   active:scale-[0.98]
-      //   group/node-box
-      //   "
-      className="size-full overflow-auto"
-    >
-      <NodeResizer
-        lineStyle={{
-          borderWidth: 2,
-          borderColor: "transparent",
+    <NodeResizer id={id}>
+      <div
+        className="
+        note-rf-drag-area
+        w-60 p-2 bg-yellow-200 rounded-md border border-yellow-300 shadow-sm
+        hover:cursor-pointer hover:shadow-md hover:border-purple-400 active:bg-yellow-300
+        active:scale-[0.98]
+        group/node-box
+        "
+        onClick={(event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          if (event.detail === 2) {
+            console.log("double clicked");
+          }
         }}
-        handleStyle={{
-          border: "none",
-          height: 10,
-          width: 10,
-          background: "transparent",
-        }}
-      />
-      <MDXEditor
-        markdown={""}
-        plugins={[
-          headingsPlugin(),
-          listsPlugin(),
-          linkPlugin(),
-          quotePlugin(),
-          thematicBreakPlugin(), // TODO: Not working
-          tablePlugin(), // TODO: Not working
-          markdownShortcutPlugin(),
-        ]}
-        // Using tailwind typography with some customizations
-        contentEditableClassName="prose prose-mdxeditor"
-      />
-    </div>
+      >
+        {/* <RFNodeResizer /> */}
+        <MDXEditor
+          markdown={""}
+          readOnly
+          plugins={[
+            headingsPlugin(),
+            listsPlugin(),
+            linkPlugin(),
+            quotePlugin(),
+            thematicBreakPlugin(), // TODO: Not working
+            tablePlugin(), // TODO: Not working
+            markdownShortcutPlugin(),
+          ]}
+          // Using tailwind typography with some customizations
+          contentEditableClassName="prose prose-mdxeditor"
+        />
+      </div>
+    </NodeResizer>
   );
 };
 
-const NodeBox = ({ label }: { label: string }) => {
+const MainNode = ({ label }: { label: string }) => {
   return (
     <div
       className="
@@ -99,7 +104,7 @@ const NodeBox = ({ label }: { label: string }) => {
         </p>
       </div>
       <div
-        className="
+        className="`
         absolute flex items-center justify-center -top-2 right-3 size-6 bg-yellow-300 text-lg rounded-full
         group-hover/node-box:border group-hover/node-box:border-purple-400
         "

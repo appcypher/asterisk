@@ -1,7 +1,36 @@
-import { Node, NodeActionType, NodesAction } from "../types/node";
+import { Node as RFNode } from "@xyflow/react";
 
 //--------------------------------------------------------------------------------------------------
-// State
+// Types
+//--------------------------------------------------------------------------------------------------
+
+type Node = RFNode<NodeData>;
+
+type NodeData = {
+  label?: string;
+  pinned?: boolean;
+};
+
+enum NodeType {
+  TRIGGER = "TRIGGER",
+  ACTION = "ACTION",
+  TERMINAL = "TERMINAL",
+  NOTE = "NOTE",
+}
+
+type NodesAction = {
+  type: NodeActionType;
+  payload: Node[];
+};
+
+enum NodeActionType {
+  ADD_NODES = "ADD_NODES",
+  REMOVE_NODES = "REMOVE_NODES",
+  UPDATE_NODES = "UPDATE_NODES",
+}
+
+//--------------------------------------------------------------------------------------------------
+// Constants
 //--------------------------------------------------------------------------------------------------
 
 const initialNodes: Node[] = [];
@@ -28,4 +57,5 @@ const nodeReducer = (state: Node[], action: NodesAction): Node[] => {
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-export { nodeReducer, initialNodes };
+export { nodeReducer, initialNodes, NodeActionType, NodeType };
+export type { Node, NodeData, NodesAction };
