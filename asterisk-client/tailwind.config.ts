@@ -17,6 +17,10 @@ const config: Config = {
             "--tw-prose-quote-borders": "rgb(0 0 0 / 50%)",
             "--tw-prose-counters": "rgb(0 0 0 / 50%)",
             "--tw-prose-links": colors.purple[500],
+            p: {
+              marginTop: "0",
+              marginBottom: "0",
+            },
           },
         },
       }),

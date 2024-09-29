@@ -65,7 +65,7 @@ const Handle = ({
       console.log("Mouse move on: ", event);
       if (isDragging) {
         nodesDispatch({
-          type: NodeActionType.UPDATE_NODES,
+          type: NodeActionType.SYNC_NODES,
           payload: [
             {
               ...node,

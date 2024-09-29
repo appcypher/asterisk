@@ -44,7 +44,7 @@ const useCanvas = (
   const onNodesChange = useCallback(
     (changes: NodeChange<Node>[]) => {
       const n = applyNodeChanges(changes, nodes);
-      nodesDispatch({ type: NodeActionType.UPDATE_NODES, payload: n });
+      nodesDispatch({ type: NodeActionType.SYNC_NODES, payload: n });
     },
     [nodesDispatch, nodes],
   );
@@ -52,7 +52,7 @@ const useCanvas = (
   const onEdgesChange = useCallback(
     (changes: EdgeChange<Edge>[]) => {
       const e = applyEdgeChanges(changes, edges);
-      edgesDispatch({ type: EdgeActionType.UPDATE_EDGES, payload: e });
+      edgesDispatch({ type: EdgeActionType.SYNC_EDGES, payload: e });
     },
     [edgesDispatch, edges],
   );
@@ -65,7 +65,7 @@ const useCanvas = (
       };
 
       const e = addEdge(edge, edges);
-      edgesDispatch({ type: EdgeActionType.UPDATE_EDGES, payload: e });
+      edgesDispatch({ type: EdgeActionType.SYNC_EDGES, payload: e });
     },
     [edgesDispatch, edges],
   );

@@ -10,12 +10,14 @@ import {
   listsPlugin,
   markdownShortcutPlugin,
   MDXEditor,
+  MDXEditorMethods,
   quotePlugin,
   tablePlugin,
   thematicBreakPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import { Node } from "./state/nodes";
+import { useRef, useState } from "react";
 
 //--------------------------------------------------------------------------------------------------
 // Component
@@ -41,6 +43,20 @@ const ActionNode = ({ data: { label } }: NodeProps<Node>) => {
 };
 
 const NoteNode = () => {
+  const mdxEditorRef = useRef<MDXEditorMethods>(null);
+  const [editorReadOnly, setEditorReadOnly] = useState(false);
+
+  const onDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setEditorReadOnly(false);
+    mdxEditorRef.current?.focus();
+  };
+
+  const onBlur = () => {
+    setEditorReadOnly(true);
+  };
+
   return (
     <div
       className="
@@ -50,18 +66,16 @@ const NoteNode = () => {
         active:scale-[0.98]
         group/node-box
         "
-      onClick={(event) => {
-        event.stopPropagation();
-        event.preventDefault();
-        if (event.detail === 2) {
-          console.log("double clicked");
-        }
-      }}
+      onClick={onDoubleClick} // A hack. We use click here because the focus activates on second click. Not sure why it behaves that way yet.
     >
       {/* <RFNodeResizer /> */}
       <MDXEditor
+        ref={mdxEditorRef}
+        autoFocus
         markdown={""}
-        readOnly
+        placeholder={"Write your note here..."}
+        readOnly={editorReadOnly}
+        onBlur={onBlur}
         plugins={[
           headingsPlugin(),
           listsPlugin(),
@@ -71,7 +85,6 @@ const NoteNode = () => {
           tablePlugin(), // TODO: Not working
           markdownShortcutPlugin(),
         ]}
-        // Using tailwind typography with some customizations
         contentEditableClassName="prose prose-mdxeditor"
       />
     </div>

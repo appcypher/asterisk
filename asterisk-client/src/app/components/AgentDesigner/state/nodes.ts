@@ -27,6 +27,7 @@ enum NodeActionType {
   ADD_NODES = "ADD_NODES",
   REMOVE_NODES = "REMOVE_NODES",
   UPDATE_NODES = "UPDATE_NODES",
+  SYNC_NODES = "SYNC_NODES",
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -54,6 +55,27 @@ const nodeReducer = (state: Node[], action: NodesAction): Node[] => {
         const updatedNode = updatedNodesMap.get(node.id);
         return updatedNode ? { ...node, ...updatedNode } : node;
       });
+
+    case NodeActionType.SYNC_NODES:
+      const updates = action.payload.reduce(
+        (acc, node) => {
+          acc[node.id] = node;
+          return acc;
+        },
+        {} as Record<string, Node>,
+      );
+
+      // Filter out nodes not present in updates and merge existing nodes with updates
+      return state
+        .filter((node) => updates[node.id]) // Remove nodes not present in updates
+        .map((node) => ({ ...node, ...updates[node.id] })) // Merge updates
+        .concat(
+          // Add new nodes that weren't in the original state
+          action.payload.filter(
+            (node) =>
+              !state.some((existingNode) => existingNode.id === node.id),
+          ),
+        );
     case NodeActionType.REMOVE_NODES:
       const idsToRemove = new Set(action.payload.map((node) => node.id));
       return state.filter((node) => !idsToRemove.has(node.id));
