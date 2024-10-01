@@ -1,9 +1,4 @@
-import {
-  Handle,
-  NodeProps,
-  Position,
-  // NodeResizer as RFNodeResizer,
-} from "@xyflow/react";
+import { Handle, NodeProps, Position } from "@xyflow/react";
 import {
   headingsPlugin,
   linkPlugin,
@@ -27,7 +22,7 @@ const TriggerNode = ({ data: { label } }: NodeProps<Node>) => {
   return (
     <>
       <MainNode label={label ?? "Trigger"} />
-      <Handle type="target" position={Position.Bottom} />
+      <NodeHandle type="source" position={Position.Bottom} />
     </>
   );
 };
@@ -35,9 +30,9 @@ const TriggerNode = ({ data: { label } }: NodeProps<Node>) => {
 const ActionNode = ({ data: { label } }: NodeProps<Node>) => {
   return (
     <>
-      <Handle type="source" position={Position.Top} />
+      <NodeHandle type="target" position={Position.Top} />
       <MainNode label={label ?? "Action"} />
-      <Handle type="target" position={Position.Bottom} />
+      <NodeHandle type="source" position={Position.Bottom} />
     </>
   );
 };
@@ -68,7 +63,6 @@ const NoteNode = () => {
         "
       onClick={onDoubleClick} // A hack. We use click here because the focus activates on second click. Not sure why it behaves that way yet.
     >
-      {/* <RFNodeResizer /> */}
       <MDXEditor
         ref={mdxEditorRef}
         autoFocus
@@ -122,6 +116,24 @@ const MainNode = ({ label }: { label: string }) => {
         <span className="icon-[humbleicons--exclamation] size-4 text-yellow-600" />
       </div>
     </div>
+  );
+};
+
+const NodeHandle = ({
+  type,
+  position,
+}: {
+  type: "source" | "target";
+  position: Position;
+}) => {
+  return (
+    <Handle
+      type={type}
+      position={position}
+      className={`
+      ${type === "source" ? "!size-2 !bg-gray-300 !border-none !-bottom-2" : "!w-3 !h-1 !bg-gray-300 !rounded-sm !border-none !-top-2"}
+      `}
+    />
   );
 };
 

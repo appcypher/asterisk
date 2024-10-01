@@ -5,6 +5,7 @@ import {
   Background,
   Connection,
   EdgeChange,
+  EdgeTypes,
   NodeChange,
   NodeTypes,
   ReactFlow,
@@ -15,11 +16,13 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Dispatch, useCallback, useContext, useState } from "react";
 import { Node, NodeActionType, NodesAction, NodeType } from "./state/nodes";
-import { Edge, EdgesAction, EdgeActionType } from "./state/edges";
+import { Edge, EdgesAction, EdgeActionType, EdgeType } from "./state/edges";
 import { TriggerNode, ActionNode, NoteNode } from "./Node";
 import ContextMenu from "./ContextMenu";
 import Controls from "./Controls";
 import { CanvasContext } from "./CanvasContextProvider";
+import CustomEdge from "./Edge";
+import ConnectionLine from "./ConnectionLine";
 
 //--------------------------------------------------------------------------------------------------
 // State
@@ -29,6 +32,10 @@ const nodeTypes: NodeTypes = {
   TRIGGER: TriggerNode,
   ACTION: ActionNode,
   NOTE: NoteNode,
+};
+
+const edgeTypes: EdgeTypes = {
+  CUSTOM: CustomEdge,
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -61,7 +68,8 @@ const useCanvas = (
     (conn: Connection) => {
       const edge: Edge = {
         ...conn,
-        id: `${conn.source}-${conn.target}`,
+        id: `${conn.source}->${conn.target}`,
+        type: EdgeType.CUSTOM,
       };
 
       const e = addEdge(edge, edges);
@@ -134,6 +142,8 @@ const Canvas = () => {
         onPaneContextMenu={onPaneContextMenu}
         onNodeContextMenu={onNodeContextMenu}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        connectionLineComponent={ConnectionLine}
       >
         <Background />
         <Controls />

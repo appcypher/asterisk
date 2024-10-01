@@ -1,5 +1,11 @@
 [workspace]
-members = ["asterisk-app", "asterisk-cli", "asterisk-core", "asterisk-server"]
+members = [
+    "asterisk-app",
+    "asterisk-cli",
+    "asterisk-core",
+    "asterisk-server",
+    "asterisk-swarm",
+]
 resolver = "2"
 
 [workspace.dependencies]

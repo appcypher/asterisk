@@ -43,7 +43,13 @@ const initialNodes: Node[] = [];
 const nodeReducer = (state: Node[], action: NodesAction): Node[] => {
   switch (action.type) {
     case NodeActionType.ADD_NODES:
-      return [...state, ...action.payload];
+      // Unset any existing selected node
+      const updatedNodes = state.map((node) => ({
+        ...node,
+        selected: false,
+      }));
+
+      return [...updatedNodes, ...action.payload];
     case NodeActionType.UPDATE_NODES:
       // Create a map for quick lookup of updated nodes by their ID
       const updatedNodesMap = new Map(

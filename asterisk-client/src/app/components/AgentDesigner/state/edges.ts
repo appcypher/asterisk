@@ -10,6 +10,10 @@ type EdgeData = {
   label: string;
 };
 
+enum EdgeType {
+  CUSTOM = "CUSTOM",
+}
+
 type EdgesAction = {
   type: EdgeActionType;
   payload: Edge[];
@@ -79,5 +83,5 @@ const edgeReducer = (state: Edge[], action: EdgesAction): Edge[] => {
 // Exports
 //--------------------------------------------------------------------------------------------------
 
-export { edgeReducer, initialEdges, EdgeActionType };
+export { edgeReducer, initialEdges, EdgeActionType, EdgeType };
 export type { Edge, EdgeData, EdgesAction };
