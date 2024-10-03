@@ -11,7 +11,8 @@ type EdgeData = {
 };
 
 enum EdgeType {
-  CUSTOM = "CUSTOM",
+  CONNECTED = "CONNECTED",
+  UNCONNECTED = "UNCONNECTED",
 }
 
 type EdgesAction = {

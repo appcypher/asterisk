@@ -21,7 +21,7 @@ import { TriggerNode, ActionNode, NoteNode } from "./Node";
 import ContextMenu from "./ContextMenu";
 import Controls from "./Controls";
 import { CanvasContext } from "./CanvasContextProvider";
-import CustomEdge from "./Edge";
+import { ConnectedEdge, UnconnectedEdge } from "./Edge";
 import ConnectionLine from "./ConnectionLine";
 
 //--------------------------------------------------------------------------------------------------
@@ -35,7 +35,8 @@ const nodeTypes: NodeTypes = {
 };
 
 const edgeTypes: EdgeTypes = {
-  CUSTOM: CustomEdge,
+  CONNECTED: ConnectedEdge,
+  UNCONNECTED: UnconnectedEdge,
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ const useCanvas = (
       const edge: Edge = {
         ...conn,
         id: `${conn.source}->${conn.target}`,
-        type: EdgeType.CUSTOM,
+        type: EdgeType.CONNECTED,
       };
 
       const e = addEdge(edge, edges);

@@ -1,4 +1,4 @@
-import { Handle, NodeProps, Position } from "@xyflow/react";
+import { NodeProps, Position } from "@xyflow/react";
 import {
   headingsPlugin,
   linkPlugin,
@@ -13,6 +13,7 @@ import {
 import "@mdxeditor/editor/style.css";
 import { Node } from "./state/nodes";
 import { useRef, useState } from "react";
+import NodeHandle from "./NodeHandle";
 
 //--------------------------------------------------------------------------------------------------
 // Component
@@ -116,24 +117,6 @@ const MainNode = ({ label }: { label: string }) => {
         <span className="icon-[humbleicons--exclamation] size-4 text-yellow-600" />
       </div>
     </div>
-  );
-};
-
-const NodeHandle = ({
-  type,
-  position,
-}: {
-  type: "source" | "target";
-  position: Position;
-}) => {
-  return (
-    <Handle
-      type={type}
-      position={position}
-      className={`
-      ${type === "source" ? "!size-2 !bg-gray-300 !border-none !-bottom-2" : "!w-3 !h-1 !bg-gray-300 !rounded-sm !border-none !-top-2"}
-      `}
-    />
   );
 };
 

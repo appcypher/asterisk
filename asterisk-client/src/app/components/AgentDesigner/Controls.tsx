@@ -20,14 +20,14 @@ const Controls = () => {
         onClick={zoomOut}
       />
       <ControlButton
+        icon="icon-[fluent--arrow-counterclockwise-16-regular]"
+        onClick={() => zoomTo(1)}
+      />
+      <ControlButton
         icon="icon-[fluent--zoom-fit-16-regular]"
         onClick={() =>
           fitView({ padding: 0.2, duration: 500, minZoom: 0.05, maxZoom: 1 })
         }
-      />
-      <ControlButton
-        icon="icon-[fluent--arrow-counterclockwise-16-regular]"
-        onClick={() => zoomTo(1)}
       />
     </div>
   );

@@ -3,6 +3,7 @@ name = "asterisk-server"
 version = "0.1.0"
 edition = "2021"
 default-run = "asterisk"
+license.workspace = true
 
 [[bin]]
 name = "asterisk"
