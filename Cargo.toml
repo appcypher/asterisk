@@ -1,12 +1,9 @@
 [workspace]
-members = [
-    "asterisk-app",
-    "asterisk-cli",
-    "asterisk-core",
-    "asterisk-server",
-    "asterisk-swarm",
-]
+members = ["asterisk-cli", "asterisk-core", "asterisk-server"]
 resolver = "2"
+
+[workspace.package]
+license = "Apache-2.0"
 
 [workspace.dependencies]
 serde_json = "1.0"

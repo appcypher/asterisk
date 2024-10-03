@@ -7,6 +7,9 @@ use std::path::PathBuf;
 /// The environment to load.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Env {
+    /// The test environment.
+    Test,
+
     /// The development environment.
     Dev,
 
@@ -21,6 +24,7 @@ pub enum Env {
 /// Load the environment variables from the given environment.
 pub fn load_env(r#type: Env) -> Option<PathBuf> {
     let env = match r#type {
+        Env::Test => ".env.sample",
         Env::Dev => ".env.dev",
         Env::Prod => ".env",
     };

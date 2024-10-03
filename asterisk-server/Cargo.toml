@@ -2,10 +2,11 @@
 name = "asterisk-server"
 version = "0.1.0"
 edition = "2021"
-default-run = "asterisk"
+default-run = "server"
+license.workspace = true
 
 [[bin]]
-name = "asterisk"
-path = "bin/asterisk.rs"
+name = "server"
+path = "bin/server.rs"
 
 [dependencies]

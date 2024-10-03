@@ -66,7 +66,7 @@ impl OpenAIModel {
             return Err(ModelError::OpenAIResponseError(body.unwrap_err()));
         };
 
-        Ok(body)
+        Ok(*body)
     }
 
     /// Calls the API with the given request messages and gets back a stream of response chunks.
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_model_openai_default() {
-        utils::load_env(Env::Dev);
+        utils::load_env(Env::Test);
         let model = OpenAIModel::default();
 
         assert_eq!(model.base_url, OPENAI_API_URL.to_string());
@@ -260,7 +260,7 @@ mod tests {
 
     #[test]
     fn test_model_openai_builders() {
-        utils::load_env(Env::Dev);
+        utils::load_env(Env::Test);
         let model = OpenAIModel::builder().build();
 
         assert_eq!(model.base_url, OPENAI_API_URL.to_string());
