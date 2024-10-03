@@ -66,7 +66,7 @@ impl OpenAIModel {
             return Err(ModelError::OpenAIResponseError(body.unwrap_err()));
         };
 
-        Ok(body)
+        Ok(*body)
     }
 
     /// Calls the API with the given request messages and gets back a stream of response chunks.

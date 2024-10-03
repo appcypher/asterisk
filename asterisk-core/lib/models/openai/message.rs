@@ -116,10 +116,10 @@ pub struct FunctionCall {
 #[serde(untagged)]
 pub enum ResponseBody {
     /// A successful response.
-    Ok(ResponseOk),
+    Ok(Box<ResponseOk>),
 
     /// An error response.
-    Error(ResponseError),
+    Error(Box<ResponseError>),
 }
 
 /// Represents an error response returned by the OpenAI API.
@@ -428,7 +428,7 @@ impl ResponseBody {
     /// Gets the error variant or panics.
     pub fn unwrap_err(self) -> ResponseError {
         match self {
-            ResponseBody::Error(error) => error,
+            ResponseBody::Error(error) => *error,
             ResponseBody::Ok(_) => panic!("Called `unwrap_err()` on a `ResponseBody::Ok` value"),
         }
     }
